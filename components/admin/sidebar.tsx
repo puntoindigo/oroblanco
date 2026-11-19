@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -22,6 +23,7 @@ export default function AdminSidebar({
   userPicture?: string;
 }) {
   const pathname = usePathname();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const appUrl = typeof window !== "undefined" ? window.location.origin : "";
   const accountsUrl =
@@ -30,10 +32,14 @@ export default function AdminSidebar({
       : "https://accounts.puntoindigo.com";
   const logoutUrl = `${accountsUrl}/api/auth/logout?next=${encodeURIComponent(appUrl + "/admin/login")}`;
 
-  return (
-    <aside className="w-56 shrink-0 bg-[#0F1A2E] min-h-screen flex flex-col">
+  const currentPage = NAV.find(({ href }) =>
+    href === "/admin" ? pathname === "/admin" : pathname.startsWith(href)
+  );
+
+  const SidebarContent = () => (
+    <>
       <div className="px-4 py-5 border-b border-white/10">
-        <Link href="/" className="flex items-center gap-2">
+        <Link href="/admin" onClick={() => setMobileOpen(false)} className="flex items-center gap-2">
           <div className="w-7 h-7 rounded bg-[#C9A84C] flex items-center justify-center font-bold text-[#0F1A2E] text-xs">OB</div>
           <div>
             <div className="text-white font-bold text-sm leading-tight">ORO BLANCO</div>
@@ -44,15 +50,13 @@ export default function AdminSidebar({
 
       <nav className="flex-1 px-3 py-4 space-y-1">
         {NAV.map(({ href, label, icon }) => {
-          const active =
-            href === "/admin"
-              ? pathname === "/admin"
-              : pathname.startsWith(href);
+          const active = href === "/admin" ? pathname === "/admin" : pathname.startsWith(href);
           return (
             <Link
               key={href}
               href={href}
-              className={`flex items-center gap-2.5 px-3 py-2 rounded text-sm transition-colors ${
+              onClick={() => setMobileOpen(false)}
+              className={`flex items-center gap-2.5 px-3 py-2.5 rounded text-sm transition-colors ${
                 active
                   ? "bg-[#C9A84C] text-[#0F1A2E] font-semibold"
                   : "text-white/70 hover:bg-white/10 hover:text-white"
@@ -65,9 +69,9 @@ export default function AdminSidebar({
         })}
       </nav>
 
-      <div className="px-3 py-4 border-t border-white/10 space-y-2">
+      <div className="px-3 py-4 border-t border-white/10 space-y-1">
         {userEmail && (
-          <div className="flex items-center gap-2 px-3 py-1">
+          <div className="flex items-center gap-2 px-3 py-2">
             {userPicture ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={userPicture} alt="" className="w-6 h-6 rounded-full" />
@@ -79,13 +83,69 @@ export default function AdminSidebar({
             <span className="text-white/50 text-xs truncate">{userName ?? userEmail}</span>
           </div>
         )}
-        <Link href="/" target="_blank" className="flex items-center gap-2.5 px-3 py-2 rounded text-xs text-white/50 hover:text-white/80 transition-colors">
+        <Link
+          href="/"
+          target="_blank"
+          className="flex items-center gap-2.5 px-3 py-2 rounded text-xs text-white/50 hover:text-white/80 transition-colors"
+        >
           <span>🌐</span> Ver sitio
         </Link>
-        <a href={logoutUrl} className="w-full flex items-center gap-2.5 px-3 py-2 rounded text-xs text-white/50 hover:text-white/80 transition-colors">
+        <a
+          href={logoutUrl}
+          className="w-full flex items-center gap-2.5 px-3 py-2 rounded text-xs text-white/50 hover:text-white/80 transition-colors"
+        >
           <span>🚪</span> Cerrar sesión
         </a>
       </div>
-    </aside>
+    </>
+  );
+
+  return (
+    <>
+      {/* ── Mobile top bar ── */}
+      <div className="md:hidden fixed top-0 inset-x-0 z-30 h-14 bg-[#0F1A2E] border-b border-white/10 flex items-center justify-between px-4">
+        <Link href="/admin" className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded bg-[#C9A84C] flex items-center justify-center font-bold text-[#0F1A2E] text-xs">OB</div>
+          <div className="text-white font-bold text-sm">ORO BLANCO</div>
+        </Link>
+        <div className="flex items-center gap-3">
+          {currentPage && (
+            <span className="text-white/50 text-xs">{currentPage.label}</span>
+          )}
+          <button
+            onClick={() => setMobileOpen(true)}
+            className="text-white/80 p-1.5 hover:text-white"
+            aria-label="Abrir menú"
+          >
+            <div className="w-5 flex flex-col gap-1">
+              <span className="block h-0.5 bg-current" />
+              <span className="block h-0.5 bg-current" />
+              <span className="block h-0.5 bg-current" />
+            </div>
+          </button>
+        </div>
+      </div>
+
+      {/* ── Mobile overlay backdrop ── */}
+      {mobileOpen && (
+        <div
+          className="md:hidden fixed inset-0 z-40 bg-black/60"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
+      {/* ── Sidebar drawer ── */}
+      {/* Mobile: fixed slide-in; desktop: static */}
+      <aside
+        className={`
+          fixed inset-y-0 left-0 z-50 w-64 bg-[#0F1A2E] flex flex-col
+          transition-transform duration-200 ease-in-out
+          md:static md:w-56 md:z-auto md:translate-x-0 md:flex
+          ${mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
+        `}
+      >
+        <SidebarContent />
+      </aside>
+    </>
   );
 }
