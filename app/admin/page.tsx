@@ -1,23 +1,46 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
+import FacturacionChart from "@/components/admin/facturacion-chart";
 
 export const dynamic = "force-dynamic";
 
+const MESES_ES = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+
 async function getStats() {
-  const [presupuestos, enCurso, pendientes, totalViajes] = await Promise.all([
+  const [presupuestos, totalClientes, totalViajes, facturas] = await Promise.all([
     prisma.viaje.count({ where: { estado: "PRESUPUESTO" } }),
-    prisma.viaje.count({ where: { estado: "EN_CURSO" } }),
-    prisma.viaje.count({ where: { estado: "PENDIENTE" } }),
+    prisma.cliente.count(),
     prisma.viaje.count(),
+    prisma.factura.findMany({
+      where: { movimiento: "emitida" },
+      select: { fecha: true, total: true },
+      orderBy: { fecha: "asc" },
+    }),
   ]);
-  const totalMes = await prisma.viaje.aggregate({
-    _sum: { precio: true },
+
+  const totalMes = await prisma.factura.aggregate({
+    _sum: { total: true },
     where: {
-      estado: { in: ["FACTURADO", "COBRADO"] },
+      movimiento: "emitida",
       fecha: { gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1) },
     },
   });
-  return { presupuestos, enCurso, pendientes, totalViajes, totalMes: totalMes._sum.precio ?? 0 };
+
+  // Agrupar facturas por mes → datos para el gráfico
+  const byMonth: Record<string, number> = {};
+  for (const f of facturas) {
+    const key = `${f.fecha.getFullYear()}-${String(f.fecha.getMonth() + 1).padStart(2, "0")}`;
+    byMonth[key] = (byMonth[key] ?? 0) + f.total;
+  }
+  const chartData = Object.entries(byMonth)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([key, total]) => ({
+      key,
+      label: MESES_ES[parseInt(key.slice(5, 7)) - 1],
+      total,
+    }));
+
+  return { presupuestos, totalClientes, totalViajes, totalMes: totalMes._sum.total ?? 0, chartData };
 }
 
 export default async function PanelControl() {
@@ -34,18 +57,18 @@ export default async function PanelControl() {
       color: "border-[#C9A84C]",
     },
     {
-      label: "Viajes en curso",
-      value: stats.enCurso,
-      sub: `${stats.pendientes} pendientes de salida`,
-      icon: "🚛",
-      href: "/admin/viajes",
+      label: "Clientes",
+      value: stats.totalClientes,
+      sub: `${stats.totalViajes} viaje${stats.totalViajes !== 1 ? "s" : ""} en total`,
+      icon: "👤",
+      href: "/admin/clientes",
       highlight: false,
       color: "border-blue-200",
     },
     {
-      label: "Total facturado este mes",
-      value: `$${stats.totalMes.toLocaleString("es-AR")}`,
-      sub: `${stats.totalViajes} viajes en total`,
+      label: "Facturado este mes",
+      value: `$${stats.totalMes.toLocaleString("es-AR", { maximumFractionDigits: 0 })}`,
+      sub: "Facturas emitidas",
       icon: "💰",
       href: "/admin/facturas",
       highlight: false,
@@ -60,6 +83,7 @@ export default async function PanelControl() {
         <p className="text-[#4A5568] text-sm mt-1">Resumen operativo</p>
       </div>
 
+      {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
         {cards.map((c) => (
           <Link
@@ -80,10 +104,25 @@ export default async function PanelControl() {
         ))}
       </div>
 
+      {/* Gráfico de facturación */}
+      <div className="bg-white rounded-xl border border-gray-100 p-5 mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-sm font-semibold text-[#0F1A2E]">Facturación por mes</h2>
+            <p className="text-xs text-[#4A5568]">Facturas emitidas desde el inicio</p>
+          </div>
+          <Link href="/admin/facturas" className="text-xs text-[#1E3A5F] hover:underline">
+            Ver facturas →
+          </Link>
+        </div>
+        <FacturacionChart data={stats.chartData} />
+      </div>
+
+      {/* Accesos rápidos */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
           { href: "/admin/viajes/nuevo", label: "+ Nuevo viaje", bg: "bg-[#1E3A5F] text-white hover:bg-[#0F1A2E]" },
-          { href: "/admin/vehiculos", label: "🚐 Vehículos", bg: "bg-white border border-gray-200 text-[#1E3A5F] hover:bg-gray-50" },
+          { href: "/admin/clientes", label: "👤 Clientes", bg: "bg-white border border-gray-200 text-[#1E3A5F] hover:bg-gray-50" },
           { href: "/admin/gastos", label: "💸 Gastos", bg: "bg-white border border-gray-200 text-[#1E3A5F] hover:bg-gray-50" },
           { href: "/admin/facturas", label: "🧾 Facturas", bg: "bg-white border border-gray-200 text-[#1E3A5F] hover:bg-gray-50" },
         ].map((a) => (

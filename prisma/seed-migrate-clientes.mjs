@@ -117,15 +117,52 @@ async function migrarDesdeFacturas() {
   }
 }
 
+// ── fase 3: facturas emitidas sin viaje → crear viaje placeholder ─────────────
+
+async function crearViajesDesdeFacturas() {
+  const facturas = await prisma.factura.findMany({
+    where: { movimiento: "emitida", viajeId: null },
+    select: { id: true, razonSocial: true, cuit: true, fecha: true, total: true },
+  });
+
+  if (facturas.length === 0) {
+    console.log("[fase3] Sin facturas emitidas sin viaje.");
+    return;
+  }
+
+  console.log(`[fase3] Creando viajes para ${facturas.length} factura(s) sin viaje...`);
+
+  for (const f of facturas) {
+    const cliente = await buscarCliente(f.cuit, f.razonSocial);
+
+    const viaje = await prisma.viaje.create({
+      data: {
+        cliente: normalizarNombre(f.razonSocial),
+        clienteId: cliente?.id ?? null,
+        fecha: f.fecha,
+        precio: f.total,
+        estado: "FACTURADO",
+        origen: "Sin registrar",
+        destino: "Sin registrar",
+      },
+    });
+
+    await prisma.factura.update({ where: { id: f.id }, data: { viajeId: viaje.id } });
+    console.log(`[fase3] Viaje creado para ${f.razonSocial} — $${f.total} (${f.fecha.toISOString().slice(0, 10)})`);
+  }
+}
+
 // ── main ──────────────────────────────────────────────────────────────────────
 
 async function main() {
   await migrarDesdeViajes();
   await migrarDesdeFacturas();
+  await crearViajesDesdeFacturas();
 
-  const total = await prisma.cliente.count();
+  const totalClientes = await prisma.cliente.count();
+  const totalViajes = await prisma.viaje.count();
   const sinCliente = await prisma.viaje.count({ where: { clienteId: null } });
-  console.log(`[seed] Fin. Clientes en DB: ${total}. Viajes sin cliente: ${sinCliente}.`);
+  console.log(`[seed] Fin. Clientes: ${totalClientes}. Viajes: ${totalViajes}. Sin cliente: ${sinCliente}.`);
 }
 
 main()
