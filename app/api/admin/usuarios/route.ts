@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/auth";
+import { getSession } from "@/lib/session";
 
 export async function POST(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.email) {
+  const session = await getSession();
+  if (!session?.email) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
     const user = await prisma.adminUser.create({
       data: {
         email: email.toLowerCase(),
-        addedBy: session.user.email,
+        addedBy: session.email,
       },
     });
     return NextResponse.json({ user });

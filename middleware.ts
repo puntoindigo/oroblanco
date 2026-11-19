@@ -1,20 +1,33 @@
-import { auth } from "@/auth";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { verifyPiSessionCookie, PI_SESSION_COOKIE_NAME } from "@/lib/pi-session";
 
-export default auth((req) => {
-  const isAdmin = req.nextUrl.pathname.startsWith("/admin");
-  const isLogin = req.nextUrl.pathname === "/admin/login";
-  const isAuthenticated = !!req.auth;
+const ACCOUNTS_URL =
+  process.env.ACCOUNTS_URL ?? "https://accounts.puntoindigo.com";
 
-  if (isAdmin && !isLogin && !isAuthenticated) {
-    return NextResponse.redirect(new URL("/admin/login", req.url));
+export function middleware(req: NextRequest) {
+  const { pathname } = req.nextUrl;
+  if (!pathname.startsWith("/admin")) return NextResponse.next();
+
+  const isLoginPage = pathname === "/admin/login";
+
+  const secret = process.env.PI_SESSION_SECRET ?? "";
+  const cookieValue = req.cookies.get(PI_SESSION_COOKIE_NAME)?.value ?? "";
+  const hasValidCookie = !!secret && !!verifyPiSessionCookie(cookieValue, secret);
+
+  if (!isLoginPage && !hasValidCookie) {
+    const appUrl =
+      process.env.NEXT_PUBLIC_APP_URL ?? req.nextUrl.origin;
+    const returnTo = `${appUrl}${pathname}`;
+    return NextResponse.redirect(
+      `${ACCOUNTS_URL}/login?redirect=${encodeURIComponent(returnTo)}`
+    );
   }
 
-  if (isLogin && isAuthenticated) {
+  if (isLoginPage && hasValidCookie) {
     return NextResponse.redirect(new URL("/admin", req.url));
   }
-});
 
-export const config = {
-  matcher: ["/admin/:path*"],
-};
+  return NextResponse.next();
+}
+
+export const config = { matcher: ["/admin/:path*"] };

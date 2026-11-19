@@ -1,11 +1,11 @@
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/auth";
+import { getSession } from "@/lib/session";
 import UsuariosClient from "@/components/admin/usuarios-client";
 
 export const dynamic = "force-dynamic";
 
 export default async function UsuariosPage() {
-  const session = await auth();
+  const session = await getSession();
   const bootstrapEmails = (process.env.ADMIN_ALLOWED_EMAILS ?? process.env.ADMIN_EMAIL ?? "")
     .split(",")
     .map((e) => e.trim().toLowerCase())
@@ -24,7 +24,7 @@ export default async function UsuariosPage() {
       <UsuariosClient
         dbUsers={dbUsers}
         bootstrapEmails={bootstrapEmails}
-        currentEmail={session?.user?.email ?? ""}
+        currentEmail={session?.email ?? ""}
       />
     </div>
   );

@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { signOut } from "next-auth/react";
 
 const NAV = [
   { href: "/admin", label: "Dashboard", icon: "📊" },
@@ -12,8 +11,25 @@ const NAV = [
   { href: "/admin/usuarios", label: "Usuarios", icon: "👥" },
 ];
 
-export default function AdminSidebar() {
+const ACCOUNTS_URL =
+  typeof window !== "undefined"
+    ? (process.env.NEXT_PUBLIC_ACCOUNTS_URL ?? "https://accounts.puntoindigo.com")
+    : "https://accounts.puntoindigo.com";
+
+export default function AdminSidebar({
+  userEmail,
+  userName,
+  userPicture,
+}: {
+  userEmail?: string;
+  userName?: string;
+  userPicture?: string;
+}) {
   const pathname = usePathname();
+
+  const appUrl =
+    typeof window !== "undefined" ? window.location.origin : "";
+  const logoutUrl = `${ACCOUNTS_URL}/api/auth/logout?next=${encodeURIComponent(appUrl + "/admin/login")}`;
 
   return (
     <aside className="w-56 shrink-0 bg-[#0F1A2E] min-h-screen flex flex-col">
@@ -56,8 +72,21 @@ export default function AdminSidebar() {
         })}
       </nav>
 
-      {/* Footer actions */}
-      <div className="px-3 py-4 border-t border-white/10 space-y-1">
+      {/* Footer */}
+      <div className="px-3 py-4 border-t border-white/10 space-y-2">
+        {userEmail && (
+          <div className="flex items-center gap-2 px-3 py-1">
+            {userPicture ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={userPicture} alt="" className="w-6 h-6 rounded-full" />
+            ) : (
+              <div className="w-6 h-6 rounded-full bg-[#C9A84C] flex items-center justify-center text-[#0F1A2E] text-xs font-bold">
+                {(userName ?? userEmail)[0].toUpperCase()}
+              </div>
+            )}
+            <span className="text-white/50 text-xs truncate">{userName ?? userEmail}</span>
+          </div>
+        )}
         <Link
           href="/"
           target="_blank"
@@ -65,12 +94,12 @@ export default function AdminSidebar() {
         >
           <span>🌐</span> Ver sitio
         </Link>
-        <button
-          onClick={() => signOut({ callbackUrl: "/admin/login" })}
-          className="w-full flex items-center gap-2.5 px-3 py-2 rounded text-xs text-white/50 hover:text-white/80 transition-colors text-left"
+        <a
+          href={logoutUrl}
+          className="w-full flex items-center gap-2.5 px-3 py-2 rounded text-xs text-white/50 hover:text-white/80 transition-colors"
         >
           <span>🚪</span> Cerrar sesión
-        </button>
+        </a>
       </div>
     </aside>
   );

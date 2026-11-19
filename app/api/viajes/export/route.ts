@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/auth";
+import { getSession } from "@/lib/session";
 
 export async function GET() {
-  const session = await auth();
+  const session = await getSession();
   if (!session) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
   const viajes = await prisma.viaje.findMany({ orderBy: { fecha: "desc" } });
