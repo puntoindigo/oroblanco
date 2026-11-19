@@ -8,38 +8,24 @@ datasource db {
   directUrl = env("DATABASE_URL_UNPOOLED")
 }
 
-enum EstadoPresupuesto {
-  NUEVO
-  VISTO
-  EN_PROCESO
-  CERRADO
-}
-
 enum EstadoViaje {
-  PROGRAMADO
+  PRESUPUESTO
+  PENDIENTE
   EN_CURSO
-  ENTREGADO
+  FACTURADO
+  COBRADO
   CANCELADO
 }
 
-model Presupuesto {
-  id            String             @id @default(cuid())
-  nombre        String
-  empresa       String?
-  telefono      String
-  email         String
-  origen        String
-  destino       String
-  tipoCarga     String
-  peso          String?
-  fechaEstimada DateTime?
-  mensaje       String?
-  estado        EstadoPresupuesto  @default(NUEVO)
-  utmSource     String?
-  utmCampaign   String?
-  createdAt     DateTime           @default(now())
-  viaje         Viaje?             @relation(fields: [viajeId], references: [id])
-  viajeId       String?
+enum TipoGasto {
+  COMBUSTIBLE
+  PEAJE
+  MANTENIMIENTO
+  NEUMATICOS
+  SEGURO
+  IMPUESTO
+  SUELDO
+  OTRO
 }
 
 model AdminUser {
@@ -49,21 +35,75 @@ model AdminUser {
   createdAt DateTime @default(now())
 }
 
+model Vehiculo {
+  id        String   @id @default(cuid())
+  patente   String   @unique
+  marca     String
+  modelo    String
+  anio      Int?
+  tipo      String   @default("Camión")
+  activo    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  viajes    Viaje[]
+  gastos    Gasto[]
+}
+
 model Viaje {
-  id           String       @id @default(cuid())
-  fecha        DateTime
-  origen       String
-  destino      String
-  tipoCarga    String
-  peso         Float?
-  cliente      String
-  clienteEmail String?
-  clienteTel   String?
-  precio       Float
-  estado       EstadoViaje  @default(PROGRAMADO)
-  notas        String?
-  nroRemito    String?
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
-  presupuestos Presupuesto[]
+  id            String      @id @default(cuid())
+  estado        EstadoViaje @default(PRESUPUESTO)
+  fecha         DateTime?
+  fechaSolicitud DateTime?
+  origen        String
+  destino       String
+  tipoCarga     String      @default("Carga General")
+  pesoVgm       Float?
+  tara          Float?
+  cliente       String
+  empresa       String?
+  clienteEmail  String?
+  clienteTel    String?
+  precio        Float?
+  nroRemito     String?
+  mensaje       String?
+  notas         String?
+  vehiculoId    String?
+  vehiculo      Vehiculo?   @relation(fields: [vehiculoId], references: [id])
+  gastos        Gasto[]
+  facturas      Factura[]
+  utmSource     String?
+  utmCampaign   String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+model Gasto {
+  id             String    @id @default(cuid())
+  fecha          DateTime
+  descripcion    String
+  monto          Float
+  tipo           TipoGasto @default(OTRO)
+  nroComprobante String?
+  vehiculoId     String?
+  vehiculo       Vehiculo? @relation(fields: [vehiculoId], references: [id])
+  viajeId        String?
+  viaje          Viaje?    @relation(fields: [viajeId], references: [id])
+  createdAt      DateTime  @default(now())
+}
+
+model Factura {
+  id            String   @id @default(cuid())
+  movimiento    String   @default("emitida")
+  tipo          String
+  puntoVenta    String
+  numero        String
+  fecha         DateTime
+  cuit          String
+  razonSocial   String
+  montoNeto     Float    @default(0)
+  iva           Float    @default(0)
+  otrosTributos Float    @default(0)
+  total         Float
+  viajeId       String?
+  viaje         Viaje?   @relation(fields: [viajeId], references: [id])
+  createdAt     DateTime @default(now())
 }

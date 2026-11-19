@@ -6,10 +6,13 @@ export const dynamic = "force-dynamic";
 
 export default async function ViajesPage() {
   const viajes = await prisma.viaje.findMany({
-    orderBy: { fecha: "desc" },
+    include: { vehiculo: { select: { patente: true, marca: true, modelo: true } } },
+    orderBy: { createdAt: "desc" },
   });
 
-  const totalFact = viajes.reduce((sum, v) => sum + v.precio, 0);
+  const totalFact = viajes
+    .filter((v) => v.estado === "FACTURADO" || v.estado === "COBRADO")
+    .reduce((sum, v) => sum + (v.precio ?? 0), 0);
 
   return (
     <div className="p-6 sm:p-8">
@@ -17,10 +20,8 @@ export default async function ViajesPage() {
         <div>
           <h1 className="text-2xl font-bold text-[#0F1A2E]">Viajes</h1>
           <p className="text-[#4A5568] text-sm mt-1">
-            {viajes.length} viajes registrados · Total facturado:{" "}
-            <span className="font-semibold text-[#1E3A5F]">
-              ${totalFact.toLocaleString("es-AR")}
-            </span>
+            {viajes.length} registros · Facturado/Cobrado:{" "}
+            <span className="font-semibold text-[#1E3A5F]">${totalFact.toLocaleString("es-AR")}</span>
           </p>
         </div>
         <div className="flex gap-2">

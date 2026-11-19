@@ -8,7 +8,14 @@ export default async function EditarViajePage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const viaje = await prisma.viaje.findUnique({ where: { id } });
+  const [viaje, vehiculos] = await Promise.all([
+    prisma.viaje.findUnique({ where: { id } }),
+    prisma.vehiculo.findMany({
+      where: { activo: true },
+      select: { id: true, patente: true, marca: true, modelo: true },
+      orderBy: { patente: "asc" },
+    }),
+  ]);
   if (!viaje) notFound();
 
   return (
@@ -19,7 +26,7 @@ export default async function EditarViajePage({
           {viaje.origen} → {viaje.destino} · {viaje.cliente}
         </p>
       </div>
-      <ViajeForm viaje={viaje} />
+      <ViajeForm viaje={viaje} vehiculos={vehiculos} />
     </div>
   );
 }

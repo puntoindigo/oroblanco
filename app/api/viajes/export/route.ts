@@ -1,28 +1,35 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import { ESTADO_VIAJE_LABELS } from "@/lib/constants";
 
 export async function GET() {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
-  const viajes = await prisma.viaje.findMany({ orderBy: { fecha: "desc" } });
+  const viajes = await prisma.viaje.findMany({
+    include: { vehiculo: true },
+    orderBy: { fecha: "desc" },
+  });
 
-  const header = "Fecha,Cliente,Email,Tel,Origen,Destino,Tipo Carga,Peso (tn),Precio (ARS),Estado,Nro Remito\n";
+  const header = "Fecha,Cliente,Empresa,Tel,Email,Origen,Destino,Tipo Carga,Peso VGM (tn),Tara (tn),Precio (ARS),Estado,Nro Remito,Vehículo\n";
   const rows = viajes
     .map((v) =>
       [
-        new Date(v.fecha).toLocaleDateString("es-AR"),
+        v.fecha ? new Date(v.fecha).toLocaleDateString("es-AR") : "",
         v.cliente,
-        v.clienteEmail ?? "",
+        v.empresa ?? "",
         v.clienteTel ?? "",
+        v.clienteEmail ?? "",
         v.origen,
         v.destino,
         v.tipoCarga,
-        v.peso ?? "",
-        v.precio,
-        v.estado,
+        v.pesoVgm ?? "",
+        v.tara ?? "",
+        v.precio ?? "",
+        ESTADO_VIAJE_LABELS[v.estado] ?? v.estado,
         v.nroRemito ?? "",
+        v.vehiculo ? `${v.vehiculo.patente} ${v.vehiculo.marca} ${v.vehiculo.modelo}` : "",
       ]
         .map((c) => `"${String(c).replace(/"/g, '""')}"`)
         .join(",")

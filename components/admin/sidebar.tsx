@@ -4,17 +4,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const NAV = [
-  { href: "/admin", label: "Dashboard", icon: "📊" },
-  { href: "/admin/presupuestos", label: "Presupuestos", icon: "📋" },
+  { href: "/admin", label: "Panel de control", icon: "📊" },
   { href: "/admin/viajes", label: "Viajes", icon: "🚛" },
-  { href: "/admin/viajes/nuevo", label: "Nuevo viaje", icon: "➕" },
+  { href: "/admin/vehiculos", label: "Vehículos", icon: "🚐" },
+  { href: "/admin/gastos", label: "Gastos", icon: "💸" },
+  { href: "/admin/facturas", label: "Facturas", icon: "🧾" },
   { href: "/admin/usuarios", label: "Usuarios", icon: "👥" },
 ];
-
-const ACCOUNTS_URL =
-  typeof window !== "undefined"
-    ? (process.env.NEXT_PUBLIC_ACCOUNTS_URL ?? "https://accounts.puntoindigo.com")
-    : "https://accounts.puntoindigo.com";
 
 export default function AdminSidebar({
   userEmail,
@@ -27,34 +23,31 @@ export default function AdminSidebar({
 }) {
   const pathname = usePathname();
 
-  const appUrl =
-    typeof window !== "undefined" ? window.location.origin : "";
-  const logoutUrl = `${ACCOUNTS_URL}/api/auth/logout?next=${encodeURIComponent(appUrl + "/admin/login")}`;
+  const appUrl = typeof window !== "undefined" ? window.location.origin : "";
+  const accountsUrl =
+    typeof window !== "undefined"
+      ? (process.env.NEXT_PUBLIC_ACCOUNTS_URL ?? "https://accounts.puntoindigo.com")
+      : "https://accounts.puntoindigo.com";
+  const logoutUrl = `${accountsUrl}/api/auth/logout?next=${encodeURIComponent(appUrl + "/admin/login")}`;
 
   return (
     <aside className="w-56 shrink-0 bg-[#0F1A2E] min-h-screen flex flex-col">
-      {/* Logo */}
       <div className="px-4 py-5 border-b border-white/10">
         <Link href="/" className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded bg-[#C9A84C] flex items-center justify-center font-bold text-[#0F1A2E] text-xs">
-            OB
-          </div>
+          <div className="w-7 h-7 rounded bg-[#C9A84C] flex items-center justify-center font-bold text-[#0F1A2E] text-xs">OB</div>
           <div>
             <div className="text-white font-bold text-sm leading-tight">ORO BLANCO</div>
-            <div className="text-[#C9A84C] text-[9px] tracking-widest uppercase leading-none">
-              Admin
-            </div>
+            <div className="text-[#C9A84C] text-[9px] tracking-widest uppercase leading-none">Admin</div>
           </div>
         </Link>
       </div>
 
-      {/* Nav */}
       <nav className="flex-1 px-3 py-4 space-y-1">
         {NAV.map(({ href, label, icon }) => {
           const active =
             href === "/admin"
               ? pathname === "/admin"
-              : pathname.startsWith(href) && href !== "/admin";
+              : pathname.startsWith(href);
           return (
             <Link
               key={href}
@@ -72,7 +65,6 @@ export default function AdminSidebar({
         })}
       </nav>
 
-      {/* Footer */}
       <div className="px-3 py-4 border-t border-white/10 space-y-2">
         {userEmail && (
           <div className="flex items-center gap-2 px-3 py-1">
@@ -87,17 +79,10 @@ export default function AdminSidebar({
             <span className="text-white/50 text-xs truncate">{userName ?? userEmail}</span>
           </div>
         )}
-        <Link
-          href="/"
-          target="_blank"
-          className="flex items-center gap-2.5 px-3 py-2 rounded text-xs text-white/50 hover:text-white/80 transition-colors"
-        >
+        <Link href="/" target="_blank" className="flex items-center gap-2.5 px-3 py-2 rounded text-xs text-white/50 hover:text-white/80 transition-colors">
           <span>🌐</span> Ver sitio
         </Link>
-        <a
-          href={logoutUrl}
-          className="w-full flex items-center gap-2.5 px-3 py-2 rounded text-xs text-white/50 hover:text-white/80 transition-colors"
-        >
+        <a href={logoutUrl} className="w-full flex items-center gap-2.5 px-3 py-2 rounded text-xs text-white/50 hover:text-white/80 transition-colors">
           <span>🚪</span> Cerrar sesión
         </a>
       </div>

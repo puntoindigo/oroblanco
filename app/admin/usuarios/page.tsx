@@ -6,11 +6,6 @@ export const dynamic = "force-dynamic";
 
 export default async function UsuariosPage() {
   const session = await getSession();
-  const bootstrapEmails = (process.env.ADMIN_ALLOWED_EMAILS ?? process.env.ADMIN_EMAIL ?? "")
-    .split(",")
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean);
-
   const dbUsers = await prisma.adminUser.findMany({ orderBy: { createdAt: "asc" } });
 
   return (
@@ -23,7 +18,6 @@ export default async function UsuariosPage() {
       </div>
       <UsuariosClient
         dbUsers={dbUsers}
-        bootstrapEmails={bootstrapEmails}
         currentEmail={session?.email ?? ""}
       />
     </div>

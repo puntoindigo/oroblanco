@@ -6,20 +6,15 @@ type AdminUser = { id: string; email: string; addedBy: string | null; createdAt:
 
 export default function UsuariosClient({
   dbUsers,
-  bootstrapEmails,
   currentEmail,
 }: {
   dbUsers: AdminUser[];
-  bootstrapEmails: string[];
   currentEmail: string;
 }) {
   const [users, setUsers] = useState(dbUsers);
   const [newEmail, setNewEmail] = useState("");
   const [adding, setAdding] = useState(false);
   const [error, setError] = useState("");
-
-  const dbEmails = users.map((u) => u.email);
-  const bootstrapOnly = bootstrapEmails.filter((e) => !dbEmails.includes(e));
 
   async function addUser() {
     const email = newEmail.trim().toLowerCase();
@@ -55,28 +50,11 @@ export default function UsuariosClient({
 
   return (
     <div className="max-w-xl space-y-6">
-      {/* Bootstrap emails (env var) */}
-      {bootstrapOnly.length > 0 && (
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-          <p className="text-xs font-semibold text-amber-700 uppercase tracking-wider mb-2">
-            Autorizados por variable de entorno
-          </p>
-          {bootstrapOnly.map((email) => (
-            <div key={email} className="flex items-center justify-between py-1.5">
-              <span className="text-sm text-amber-800 font-medium">{email}</span>
-              <span className="text-xs text-amber-600 bg-amber-100 px-2 py-0.5 rounded-full">
-                env var
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
-
       {/* DB users */}
       <div className="bg-white rounded-xl border border-gray-100">
         <div className="px-4 py-3 border-b border-gray-50">
           <p className="text-xs font-semibold text-[#4A5568] uppercase tracking-wider">
-            Autorizados en base de datos
+            Usuarios con acceso
           </p>
         </div>
 
