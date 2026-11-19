@@ -29,13 +29,29 @@ const ESTADOS_FILTER = [
   { value: "CANCELADO", label: "Cancelado" },
 ];
 
+const PERIODOS = [
+  { value: "mes", label: "Este mes" },
+  { value: "3m", label: "Últimos 3 meses" },
+  { value: "todo", label: "Todo" },
+];
+
+function inicioMes(mesesAtras = 0) {
+  const d = new Date();
+  return new Date(d.getFullYear(), d.getMonth() - mesesAtras, 1);
+}
+
 export default function ViajesTable({ viajes }: { viajes: Viaje[] }) {
   const router = useRouter();
   const [filtro, setFiltro] = useState("");
+  const [periodo, setPeriodo] = useState("mes");
   const [changingId, setChangingId] = useState<string | null>(null);
   const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
 
-  const filtered = filtro ? viajes.filter((v) => v.estado === filtro) : viajes;
+  const desde = periodo === "mes" ? inicioMes(0) : periodo === "3m" ? inicioMes(2) : null;
+
+  const filtered = viajes
+    .filter((v) => !filtro || v.estado === filtro)
+    .filter((v) => !desde || (v.fecha && new Date(v.fecha) >= desde));
 
   async function changeEstado(id: string, estado: string) {
     setChangingId(id);
@@ -68,7 +84,25 @@ export default function ViajesTable({ viajes }: { viajes: Viaje[] }) {
 
   return (
     <div className="space-y-4">
-      {/* Filtros */}
+      {/* Filtros de período */}
+      <div className="flex flex-wrap gap-1.5 items-center">
+        <span className="text-xs text-[#4A5568] font-medium mr-1">Período:</span>
+        {PERIODOS.map((p) => (
+          <button
+            key={p.value}
+            onClick={() => setPeriodo(p.value)}
+            className={`text-xs px-3 py-1.5 rounded-full font-medium transition-colors ${
+              periodo === p.value
+                ? "bg-[#1E3A5F] text-white"
+                : "bg-white border border-gray-200 text-[#4A5568] hover:bg-gray-50"
+            }`}
+          >
+            {p.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Filtros de estado */}
       <div className="flex flex-wrap gap-1.5">
         {ESTADOS_FILTER.map((e) => (
           <button
@@ -76,14 +110,14 @@ export default function ViajesTable({ viajes }: { viajes: Viaje[] }) {
             onClick={() => setFiltro(e.value)}
             className={`text-xs px-3 py-1.5 rounded-full font-medium transition-colors ${
               filtro === e.value
-                ? "bg-[#1E3A5F] text-white"
+                ? "bg-[#C9A84C] text-[#0F1A2E]"
                 : "bg-white border border-gray-200 text-[#4A5568] hover:bg-gray-50"
             }`}
           >
             {e.label}
             {e.value && (
               <span className="ml-1 text-[10px] opacity-70">
-                ({viajes.filter((v) => v.estado === e.value).length})
+                ({viajes.filter((v) => !desde || (v.fecha && new Date(v.fecha) >= desde)).filter((v) => v.estado === e.value).length})
               </span>
             )}
           </button>
