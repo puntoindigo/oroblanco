@@ -16,7 +16,6 @@ type Viaje = {
   cliente: string;
   clienteTel: string | null;
   precio: number | null;
-  precioConIva: boolean;
   vehiculo: Vehiculo;
 };
 
@@ -135,7 +134,7 @@ export default function ViajesTable({ viajes }: { viajes: Viaje[] }) {
                       </select>
                     </td>
                     <td className="px-4 py-3 text-xs text-[#4A5568] whitespace-nowrap">
-                      {v.fecha ? new Date(v.fecha).toLocaleDateString("es-AR") : "—"}
+                      {v.fecha ? new Date(v.fecha).toLocaleDateString("es-AR", { timeZone: "UTC" }) : "—"}
                     </td>
                     <td className="px-4 py-3">
                       <div className="font-medium text-[#0F1A2E]">{v.cliente}</div>
@@ -148,17 +147,10 @@ export default function ViajesTable({ viajes }: { viajes: Viaje[] }) {
                     </td>
                     <td className="px-4 py-3 text-xs text-[#4A5568]">{v.tipoCarga}</td>
                     <td className="px-4 py-3 whitespace-nowrap">
-                      {v.precio ? (
-                        <div>
-                          <span className="text-sm font-semibold text-[#0F1A2E]">
-                            ${v.precio.toLocaleString("es-AR")}
-                          </span>
-                          <span className={`ml-1.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full ${
-                            v.precioConIva ? "bg-blue-50 text-blue-600" : "bg-amber-50 text-amber-600"
-                          }`}>
-                            {v.precioConIva ? "+IVA inc." : "neto"}
-                          </span>
-                        </div>
+                      {v.precio != null ? (
+                        <span className="text-sm font-semibold text-[#0F1A2E]">
+                          ${v.precio.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </span>
                       ) : "—"}
                     </td>
                     <td className="px-4 py-3 text-xs text-[#4A5568] font-mono">
