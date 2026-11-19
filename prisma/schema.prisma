@@ -106,4 +106,6 @@ model Factura {
   viajeId       String?
   viaje         Viaje?   @relation(fields: [viajeId], references: [id])
   createdAt     DateTime @default(now())
+
+  @@unique([movimiento, puntoVenta, numero])
 }

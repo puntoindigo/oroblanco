@@ -100,7 +100,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "No se encontraron registros válidos", errores: errors }, { status: 400 });
   }
 
-  const created = await prisma.factura.createMany({ data: records, skipDuplicates: false });
+  let importados = 0;
+  let omitidos = 0;
+  for (const r of records) {
+    const existing = await prisma.factura.findFirst({
+      where: { movimiento: r.movimiento, puntoVenta: r.puntoVenta, numero: r.numero },
+      select: { id: true },
+    });
+    if (existing) { omitidos++; continue; }
+    await prisma.factura.create({ data: r });
+    importados++;
+  }
 
-  return NextResponse.json({ importados: created.count, errores: errors });
+  return NextResponse.json({ importados, omitidos, errores: errors });
 }

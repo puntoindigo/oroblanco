@@ -8,6 +8,7 @@ export async function GET(req: NextRequest) {
 
   const { searchParams } = new URL(req.url);
   const mes = searchParams.get("mes"); // "2026-11"
+  const movimiento = searchParams.get("movimiento") ?? "emitida";
 
   let fechaDesde: Date | undefined;
   let fechaHasta: Date | undefined;
@@ -19,7 +20,7 @@ export async function GET(req: NextRequest) {
 
   const facturas = await prisma.factura.findMany({
     where: {
-      movimiento: "emitida",
+      movimiento,
       ...(fechaDesde && { fecha: { gte: fechaDesde, lte: fechaHasta } }),
     },
     include: { viaje: true },
