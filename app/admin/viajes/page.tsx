@@ -6,7 +6,11 @@ export const dynamic = "force-dynamic";
 
 export default async function ViajesPage() {
   const viajes = await prisma.viaje.findMany({
-    include: { vehiculo: { select: { patente: true, marca: true, modelo: true } } },
+    select: {
+      id: true, estado: true, fecha: true, origen: true, destino: true,
+      tipoCarga: true, cliente: true, clienteTel: true, precio: true, precioConIva: true,
+      vehiculo: { select: { patente: true, marca: true, modelo: true } },
+    },
     orderBy: { createdAt: "desc" },
   });
 

@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
   const {
     fecha, fechaSolicitud, origen, destino, tipoCarga,
     pesoVgm, tara, cliente, empresa, clienteEmail, clienteTel,
-    precio, notas, nroRemito, estado, vehiculoId, mensaje,
+    precio, precioConIva, notas, nroRemito, estado, vehiculoId, mensaje,
   } = body;
 
   const viaje = await prisma.viaje.create({
@@ -27,6 +27,7 @@ export async function POST(req: NextRequest) {
       clienteEmail: clienteEmail || null,
       clienteTel: clienteTel || null,
       precio: precio ? parseFloat(precio) : null,
+      precioConIva: precioConIva === "false" || precioConIva === false ? false : true,
       notas: notas || null,
       nroRemito: nroRemito || null,
       estado: estado || "PENDIENTE",

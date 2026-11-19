@@ -26,6 +26,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       ...(body.clienteEmail !== undefined && { clienteEmail: body.clienteEmail || null }),
       ...(body.clienteTel !== undefined && { clienteTel: body.clienteTel || null }),
       ...(body.precio !== undefined && { precio: body.precio ? parseFloat(body.precio) : null }),
+      ...(body.precioConIva !== undefined && { precioConIva: body.precioConIva === "true" || body.precioConIva === true }),
       ...(body.estado && { estado: body.estado }),
       ...(body.notas !== undefined && { notas: body.notas || null }),
       ...(body.nroRemito !== undefined && { nroRemito: body.nroRemito || null }),
