@@ -24,6 +24,7 @@ export default function AdminSidebar({
 }) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [confirmLogout, setConfirmLogout] = useState(false);
 
   const logoutUrl = "/api/auth/logout";
 
@@ -85,12 +86,12 @@ export default function AdminSidebar({
         >
           <span>🌐</span> Ver sitio
         </Link>
-        <a
-          href={logoutUrl}
+        <button
+          onClick={() => setConfirmLogout(true)}
           className="w-full flex items-center gap-2.5 px-3 py-2 rounded text-xs text-white/50 hover:text-white/80 transition-colors"
         >
           <span>🚪</span> Cerrar sesión
-        </a>
+        </button>
       </div>
     </>
   );
@@ -120,6 +121,32 @@ export default function AdminSidebar({
           </button>
         </div>
       </div>
+
+      {/* ── Modal confirmación logout ── */}
+      {confirmLogout && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60" onClick={() => setConfirmLogout(false)} />
+          <div className="relative bg-white rounded-xl shadow-xl p-6 w-full max-w-xs text-center">
+            <div className="text-3xl mb-3">🚪</div>
+            <h3 className="text-[#0F1A2E] font-bold text-base mb-1">¿Cerrar sesión?</h3>
+            <p className="text-[#4A5568] text-sm mb-5">Vas a salir del panel de administración.</p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setConfirmLogout(false)}
+                className="flex-1 border border-gray-200 text-[#4A5568] py-2 rounded text-sm hover:bg-gray-50 transition-colors"
+              >
+                Cancelar
+              </button>
+              <a
+                href={logoutUrl}
+                className="flex-1 bg-[#0F1A2E] text-white py-2 rounded text-sm font-semibold hover:bg-[#1E3A5F] transition-colors"
+              >
+                Salir
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Mobile overlay backdrop ── */}
       {mobileOpen && (
