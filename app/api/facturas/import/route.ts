@@ -2,30 +2,34 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 
-/** Parsea la fecha DD/MM/AAAA que exporta ARCA. */
-function parseArDate(s: string): Date | null {
+// ARCA exporta fechas como YYYY-MM-DD
+function parseDate(s: string): Date | null {
   const clean = s.trim().replace(/"/g, "");
+  if (/^\d{4}-\d{2}-\d{2}$/.test(clean)) return new Date(clean + "T00:00:00");
+  // fallback DD/MM/AAAA por si acaso
   const m = clean.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-  if (!m) return null;
-  return new Date(parseInt(m[3]), parseInt(m[2]) - 1, parseInt(m[1]));
+  if (m) return new Date(parseInt(m[3]), parseInt(m[2]) - 1, parseInt(m[1]));
+  return null;
 }
 
+// ARCA usa coma decimal y punto de miles: "787.500,00" → 787500
 function parseNum(s: string): number {
-  return parseFloat(s.replace(/"/g, "").replace(/\./g, "").replace(",", ".")) || 0;
+  const clean = s.replace(/"/g, "").trim();
+  if (!clean) return 0;
+  return parseFloat(clean.replace(/\./g, "").replace(",", ".")) || 0;
 }
 
 function cleanStr(s: string): string {
   return s.replace(/^"|"$/g, "").trim();
 }
 
-function detectMovimiento(headers: string[]): "emitida" | "recibida" {
-  const h = headers.join(",").toLowerCase();
-  return h.includes("receptor") || h.includes("emisor") && !h.includes("receptor")
-    ? "emitida"
-    : h.includes("emisor") && !h.includes("receptor")
-    ? "recibida"
-    : "emitida";
-}
+// Mapa de código numérico de comprobante AFIP/ARCA → etiqueta
+const TIPO_MAP: Record<string, string> = {
+  "1": "FAC A", "2": "NDB A", "3": "NDC A",
+  "6": "FAC B", "7": "NDB B", "8": "NDC B",
+  "11": "FAC C", "12": "NDB C", "13": "NDC C",
+  "51": "FAC M", "63": "LIQ A", "81": "TKT",
+};
 
 export async function POST(req: NextRequest) {
   const session = await getSession();
@@ -38,77 +42,78 @@ export async function POST(req: NextRequest) {
   if (!file) return NextResponse.json({ error: "No se recibió archivo" }, { status: 400 });
 
   const text = await file.text();
+
+  // ARCA usa separador ";" — dividir líneas y columnas correctamente
   const lines = text.split(/\r?\n/).filter((l) => l.trim());
   if (lines.length < 2) return NextResponse.json({ error: "CSV vacío" }, { status: 400 });
 
-  const rawHeaders = lines[0].split(",");
-  const headers = rawHeaders.map(cleanStr);
+  const headers = lines[0].split(";").map(cleanStr);
 
-  // Detectar índices de columnas clave (ARCA puede variar el orden)
-  const idx = (key: string) => headers.findIndex((h) => h.toLowerCase().includes(key.toLowerCase()));
+  // Localizar columnas por nombre exacto (tolerante a mayúsculas)
+  const col = (name: string) => headers.findIndex((h) => h.toLowerCase() === name.toLowerCase());
+  const colIncludes = (fragment: string) => headers.findIndex((h) => h.toLowerCase().includes(fragment.toLowerCase()));
 
-  const iFecha = idx("Fecha");
-  const iTipo = idx("Tipo");
-  const iPV = idx("Punto de Venta");
-  const iNum = idx("Número Desde") !== -1 ? idx("Número Desde") : idx("Número");
-  const iCuit = idx("Nro. Doc") !== -1 ? idx("Nro. Doc") : idx("CUIT");
-  const iDenom = idx("Denominación") !== -1 ? idx("Denominación") : idx("Razón Social");
-  const iNeto = idx("Neto Gravado") !== -1 ? idx("Neto Gravado") : idx("Importe Neto");
-  const iIva = idx("IVA");
-  const iOtros = idx("Otros Trib") !== -1 ? idx("Otros Trib") : idx("Otros Tributos");
-  const iTotal = idx("Total");
+  const iFecha  = col("Fecha de Emisión");
+  const iTipo   = col("Tipo de Comprobante");
+  const iPV     = col("Punto de Venta");
+  const iNum    = col("Número Desde");
+  const iTotal  = col("Imp. Total");
+  const iTotIva = col("Total IVA");
+  const iNeto   = col("Imp. Neto Gravado Total");
+  const iOtros  = col("Otros Tributos");
+
+  // CUIT y denominación difieren entre emitidos y recibidos
+  const iCuit  = col("Nro. Doc. Receptor") !== -1  ? col("Nro. Doc. Receptor")  : col("Nro. Doc. Emisor");
+  const iDenom = col("Denominación Receptor") !== -1 ? col("Denominación Receptor") : col("Denominación Emisor");
 
   if (iFecha === -1 || iTotal === -1) {
     return NextResponse.json(
-      { error: "Formato no reconocido. Verificá que sea el CSV de ARCA (Mis Comprobantes)." },
+      {
+        error:
+          "Formato no reconocido. El archivo debe ser el CSV de ARCA (Mis Comprobantes → Emitidos o Recibidos). " +
+          `Columnas detectadas: ${headers.slice(0, 5).join(" | ")}`,
+      },
       { status: 400 }
     );
   }
 
-  const records = [];
   const errors: string[] = [];
+  let importados = 0;
+  let omitidos = 0;
 
   for (let i = 1; i < lines.length; i++) {
-    const cols = lines[i].split(",");
-    if (cols.length < 3) continue;
+    const cols = lines[i].split(";");
+    if (cols.length < 5) continue;
 
-    const fecha = parseArDate(cols[iFecha] ?? "");
+    const fecha = parseDate(cols[iFecha] ?? "");
     if (!fecha) {
-      errors.push(`Fila ${i + 1}: fecha inválida (${cols[iFecha]})`);
+      errors.push(`Fila ${i + 1}: fecha inválida "${cols[iFecha]}"`);
       continue;
     }
 
     const total = parseNum(cols[iTotal] ?? "0");
-    if (total === 0) continue;
+    if (total === 0) continue; // filas vacías o de totales
 
-    records.push({
-      movimiento,
-      tipo: cleanStr(cols[iTipo] ?? "FACTURA"),
-      puntoVenta: cleanStr(cols[iPV] ?? "0001"),
-      numero: cleanStr(cols[iNum] ?? "0"),
-      fecha,
-      cuit: cleanStr(cols[iCuit] ?? ""),
-      razonSocial: cleanStr(cols[iDenom] ?? ""),
-      montoNeto: parseNum(cols[iNeto] ?? "0"),
-      iva: parseNum(cols[iIva] ?? "0"),
-      otrosTributos: parseNum(cols[iOtros] ?? "0"),
-      total,
-    });
-  }
+    const tipoCode = cleanStr(cols[iTipo] ?? "");
+    const tipo = TIPO_MAP[tipoCode] ?? `Tipo ${tipoCode}`;
+    const puntoVenta = cleanStr(cols[iPV] ?? "0001").padStart(4, "0");
+    const numero = cleanStr(cols[iNum] ?? "0").padStart(8, "0");
+    const cuit = cleanStr(cols[iCuit] ?? "");
+    const razonSocial = cleanStr(cols[iDenom] ?? "");
+    const montoNeto = parseNum(cols[iNeto] ?? "0");
+    const iva = parseNum(cols[iTotIva] ?? "0");
+    const otrosTributos = parseNum(iOtros !== -1 ? (cols[iOtros] ?? "0") : "0");
 
-  if (records.length === 0) {
-    return NextResponse.json({ error: "No se encontraron registros válidos", errores: errors }, { status: 400 });
-  }
-
-  let importados = 0;
-  let omitidos = 0;
-  for (const r of records) {
+    // Deduplicar: si ya existe ese comprobante, saltar
     const existing = await prisma.factura.findFirst({
-      where: { movimiento: r.movimiento, puntoVenta: r.puntoVenta, numero: r.numero },
+      where: { movimiento, puntoVenta, numero },
       select: { id: true },
     });
     if (existing) { omitidos++; continue; }
-    await prisma.factura.create({ data: r });
+
+    await prisma.factura.create({
+      data: { movimiento, tipo, puntoVenta, numero, fecha, cuit, razonSocial, montoNeto, iva, otrosTributos, total },
+    });
     importados++;
   }
 
