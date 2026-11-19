@@ -18,8 +18,13 @@ export default function GastosPage() {
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
   const [error, setError] = useState("");
+  // Hoy en DD/MM/AAAA
+  const hoyDdMm = (() => {
+    const d = new Date();
+    return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
+  })();
   const [form, setForm] = useState({
-    fecha: new Date().toISOString().split("T")[0],
+    fecha: hoyDdMm,
     descripcion: "", monto: "", tipo: "OTRO",
     nroComprobante: "", vehiculoId: "",
   });
@@ -36,15 +41,18 @@ export default function GastosPage() {
     setAdding(true);
     setError("");
     try {
+      // Convertir DD/MM/AAAA → YYYY-MM-DD para la API
+      const [d, mo, y] = form.fecha.split("/");
+      const fechaIso = y && mo && d ? `${y}-${mo.padStart(2, "0")}-${d.padStart(2, "0")}` : form.fecha;
       const res = await fetch("/api/gastos", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, fecha: fechaIso }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       setGastos((prev) => [data, ...prev]);
-      setForm({ fecha: new Date().toISOString().split("T")[0], descripcion: "", monto: "", tipo: "OTRO", nroComprobante: "", vehiculoId: "" });
+      setForm({ fecha: hoyDdMm, descripcion: "", monto: "", tipo: "OTRO", nroComprobante: "", vehiculoId: "" });
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Error al guardar");
     } finally {
@@ -78,7 +86,15 @@ export default function GastosPage() {
       <form onSubmit={handleAdd} className="bg-white rounded-xl border border-gray-100 p-5 mb-6">
         <p className="text-xs font-semibold text-[#4A5568] uppercase tracking-wider mb-3">Registrar gasto</p>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          <input type="date" value={form.fecha} onChange={(e) => setForm({ ...form, fecha: e.target.value })} required className={iCls} />
+          <input
+            type="text"
+            value={form.fecha}
+            onChange={(e) => setForm({ ...form, fecha: e.target.value })}
+            required
+            placeholder="DD/MM/AAAA"
+            maxLength={10}
+            className={iCls}
+          />
           <input value={form.descripcion} onChange={(e) => setForm({ ...form, descripcion: e.target.value })}
             required placeholder="Descripción" className={iCls} />
           <input type="number" value={form.monto} onChange={(e) => setForm({ ...form, monto: e.target.value })}
@@ -120,7 +136,7 @@ export default function GastosPage() {
                 {gastos.map((g) => (
                   <tr key={g.id} className="border-b border-gray-50 hover:bg-[#F8F8F4]">
                     <td className="px-4 py-3 text-xs text-[#4A5568] whitespace-nowrap">
-                      {new Date(g.fecha).toLocaleDateString("es-AR")}
+                      {new Date(g.fecha).toLocaleDateString("es-AR", { timeZone: "UTC" })}
                     </td>
                     <td className="px-4 py-3 text-[#0F1A2E]">{g.descripcion}</td>
                     <td className="px-4 py-3 text-xs text-[#4A5568]">{TIPOS_GASTO[g.tipo] ?? g.tipo}</td>

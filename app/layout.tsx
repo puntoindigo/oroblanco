@@ -21,7 +21,7 @@ const barlowCondensed = Barlow_Condensed({
 export const metadata: Metadata = {
   title: "Oro Blanco Transporte y Logística | Fletes Nacionales desde Rosario",
   description:
-    "Empresa de transporte de carga nacional e interprovincial. Especialistas en fletes, logística y conexión con el Puerto de Rosario para importación y exportación. Atención personalizada y presupuesto en 2 horas.",
+    "Empresa de transporte de carga nacional e interprovincial. Especialistas en fletes, logística y conexión con el Puerto de Rosario para importación y exportación. Atención personalizada y presupuesto rápido.",
   keywords: [
     "transporte de carga",
     "fletes Rosario",
@@ -34,7 +34,7 @@ export const metadata: Metadata = {
   ],
   openGraph: {
     title: "Oro Blanco Transporte y Logística",
-    description: "Fletes nacionales e interprovinciales desde Rosario. Presupuesto en 2 horas.",
+    description: "Fletes nacionales e interprovinciales desde Rosario. Presupuesto rápido.",
     type: "website",
   },
 };

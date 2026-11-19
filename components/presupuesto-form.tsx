@@ -24,7 +24,14 @@ export default function PresupuestoForm() {
     setErrorMsg("");
 
     const form = e.currentTarget;
-    const data = Object.fromEntries(new FormData(form));
+    const data: Record<string, string> = Object.fromEntries(
+      [...new FormData(form).entries()].map(([k, v]) => [k, String(v)])
+    );
+    // Convertir fecha DD/MM/AAAA → YYYY-MM-DD
+    if (data.fechaEstimada) {
+      const m = data.fechaEstimada.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+      if (m) data.fechaEstimada = `${m[3]}-${m[2].padStart(2, "0")}-${m[1].padStart(2, "0")}`;
+    }
 
     try {
       const res = await fetch("/api/presupuesto", {
@@ -49,7 +56,7 @@ export default function PresupuestoForm() {
           ¡Presupuesto recibido!
         </h3>
         <p className="text-white/70 text-sm">
-          Te contactamos en menos de 2 horas con el precio y fecha de salida.
+          Te contactamos a la brevedad con el precio y fecha de salida.
         </p>
         <button
           onClick={() => setState("idle")}
@@ -108,8 +115,10 @@ export default function PresupuestoForm() {
           </label>
           <input
             name="fechaEstimada"
-            type="date"
-            className="bg-white/10 border border-white/20 text-white rounded px-3 py-2.5 text-sm focus:outline-none focus:border-[#C9A84C] transition-colors"
+            type="text"
+            placeholder="DD/MM/AAAA"
+            maxLength={10}
+            className="bg-white/10 border border-white/20 text-white rounded px-3 py-2.5 text-sm focus:outline-none focus:border-[#C9A84C] transition-colors placeholder:text-white/30"
           />
         </div>
 
@@ -139,7 +148,7 @@ export default function PresupuestoForm() {
       </button>
 
       <p className="mt-3 text-center text-white/40 text-xs">
-        Sin compromiso · Respondemos en menos de 2 horas
+        Sin compromiso · Te respondemos a la brevedad
       </p>
     </form>
   );

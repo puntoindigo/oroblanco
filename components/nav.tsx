@@ -46,7 +46,7 @@ export default function Nav() {
           <Link href="#nosotros" className="hover:text-[#C9A84C] transition-colors">
             Nosotros
           </Link>
-          <Link href="#contacto" className="hover:text-[#C9A84C] transition-colors">
+          <Link href="#presupuesto" className="hover:text-[#C9A84C] transition-colors">
             Contacto
           </Link>
           <Link
@@ -75,14 +75,19 @@ export default function Nav() {
       {menuOpen && (
         <div className="md:hidden bg-[#0F1A2E]/98 backdrop-blur-md border-t border-white/10">
           <nav className="flex flex-col px-4 py-4 gap-3 text-white/80 text-sm">
-            {["#servicios", "#cobertura", "#nosotros", "#contacto"].map((href) => (
+            {[
+              { href: "#servicios", label: "Servicios" },
+              { href: "#cobertura", label: "Cobertura" },
+              { href: "#nosotros", label: "Nosotros" },
+              { href: "#presupuesto", label: "Contacto" },
+            ].map(({ href, label }) => (
               <a
                 key={href}
                 href={href}
-                className="py-2 hover:text-[#C9A84C] transition-colors capitalize"
+                className="py-2 hover:text-[#C9A84C] transition-colors"
                 onClick={() => setMenuOpen(false)}
               >
-                {href.replace("#", "")}
+                {label}
               </a>
             ))}
             <a

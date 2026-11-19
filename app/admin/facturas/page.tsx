@@ -22,6 +22,7 @@ export default function FacturasPage() {
   const [movimiento, setMovimiento] = useState("emitida");
   const [importing, setImporting] = useState(false);
   const [importMsg, setImportMsg] = useState("");
+  const [showImport, setShowImport] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   // Cargar viajes una sola vez (opciones para el selector)
@@ -32,7 +33,7 @@ export default function FacturasPage() {
         setViajes(
           data.map((v) => ({
             id: v.id,
-            label: `${v.cliente} · ${v.origen} → ${v.destino}${v.fecha ? " · " + new Date(v.fecha).toLocaleDateString("es-AR") : ""}`,
+            label: `${v.cliente} · ${v.origen} → ${v.destino}${v.fecha ? " · " + new Date(v.fecha).toLocaleDateString("es-AR", { timeZone: "UTC" }) : ""}`,
           }))
         )
       )
@@ -151,31 +152,39 @@ export default function FacturasPage() {
           </div>
         </div>
 
-        <div className="border-t border-gray-100 pt-4">
-          <p className="text-xs font-semibold text-[#4A5568] uppercase tracking-wider mb-1">
+        <div className="border-t border-gray-100 pt-3">
+          <button
+            onClick={() => setShowImport((v) => !v)}
+            className="flex items-center gap-2 text-xs text-[#4A5568] hover:text-[#1E3A5F] transition-colors"
+          >
+            <span className={`transition-transform ${showImport ? "rotate-90" : ""}`}>▶</span>
             Importar CSV de ARCA
-          </p>
-          <p className="text-xs text-[#4A5568] mb-3">
-            En ARCA: <strong>Mis Comprobantes → {movimiento === "emitida" ? "Emitidos" : "Recibidos"} → Exportar → Excel</strong>.
-            Abrí en Excel / LibreOffice y guardá como <em>CSV separado por comas</em>.
-            Los registros ya importados se omiten automáticamente.
-          </p>
-          <div className="flex items-center gap-3 flex-wrap">
-            <input
-              ref={fileRef}
-              type="file"
-              accept=".csv,.txt"
-              className="text-xs text-[#4A5568] file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-[#F8F8F4] file:text-[#1E3A5F] hover:file:bg-gray-200"
-            />
-            <button
-              onClick={handleImport}
-              disabled={importing}
-              className="text-xs bg-[#1E3A5F] text-white font-semibold px-4 py-2 rounded hover:bg-[#0F1A2E] transition-colors disabled:opacity-60"
-            >
-              {importing ? "Importando..." : "Importar"}
-            </button>
-            {importMsg && <span className="text-xs">{importMsg}</span>}
-          </div>
+            {importMsg && <span className="ml-2">{importMsg}</span>}
+          </button>
+          {showImport && (
+            <div className="mt-3 space-y-2">
+              <p className="text-xs text-[#4A5568]">
+                En ARCA: <strong>Mis Comprobantes → {movimiento === "emitida" ? "Emitidos" : "Recibidos"} → Exportar → Excel</strong>.
+                Abrí en Excel / LibreOffice y guardá como <em>CSV separado por punto y coma</em>.
+                Los registros ya importados se omiten automáticamente.
+              </p>
+              <div className="flex items-center gap-3 flex-wrap">
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept=".csv,.txt"
+                  className="text-xs text-[#4A5568] file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-[#F8F8F4] file:text-[#1E3A5F] hover:file:bg-gray-200"
+                />
+                <button
+                  onClick={handleImport}
+                  disabled={importing}
+                  className="text-xs bg-[#1E3A5F] text-white font-semibold px-4 py-2 rounded hover:bg-[#0F1A2E] transition-colors disabled:opacity-60"
+                >
+                  {importing ? "Importando..." : "Importar"}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -206,7 +215,7 @@ export default function FacturasPage() {
                 {facturas.map((f) => (
                   <tr key={f.id} className={`border-b border-gray-50 hover:bg-[#F8F8F4] ${!f.viajeId ? "bg-amber-50/40" : ""}`}>
                     <td className="px-4 py-3 text-xs text-[#4A5568] whitespace-nowrap">
-                      {new Date(f.fecha).toLocaleDateString("es-AR")}
+                      {new Date(f.fecha).toLocaleDateString("es-AR", { timeZone: "UTC" })}
                     </td>
                     <td className="px-4 py-3 text-xs font-semibold text-[#0F1A2E]">{f.tipo}</td>
                     <td className="px-4 py-3 text-xs font-mono text-[#4A5568]">

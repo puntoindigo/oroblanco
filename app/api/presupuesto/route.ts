@@ -37,23 +37,30 @@ export async function POST(req: NextRequest) {
     });
 
     // Notificación por email (si RESEND_API_KEY está configurado)
+    const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? "oroblancotyl@gmail.com";
+    const EMAIL_FROM = process.env.EMAIL_FROM ?? "puntoindigo3@gmail.com";
+    const EMAIL_PASSWORD = process.env.EMAIL_PASSWORD;
     const RESEND_API_KEY = process.env.RESEND_API_KEY;
-    const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? process.env.ADMIN_ALLOWED_EMAILS?.split(",")[0];
-    if (RESEND_API_KEY && ADMIN_EMAIL) {
-      try {
+    const subject = `Nuevo presupuesto de ${nombre}`;
+    const html = `<p><b>${nombre}</b> (${empresa ?? "particular"}) solicitó un presupuesto.</p>
+<p>Ruta: ${origen} → ${destino}<br>Carga: ${tipoCarga}<br>Tel: ${telefono}<br>Email: ${email ?? "—"}</p>
+<p>Ver en el <a href="https://oroblanco.puntoindigo.com/admin/viajes">panel de control</a>.</p>`;
+
+    try {
+      if (RESEND_API_KEY) {
         const { Resend } = await import("resend");
         const resend = new Resend(RESEND_API_KEY);
-        await resend.emails.send({
-          from: "Oro Blanco <no-reply@puntoindigo.com>",
-          to: ADMIN_EMAIL.trim(),
-          subject: `Nuevo presupuesto de ${nombre}`,
-          html: `<p><b>${nombre}</b> (${empresa ?? "particular"}) solicitó un presupuesto.</p>
-<p>Ruta: ${origen} → ${destino}<br>Carga: ${tipoCarga}<br>Tel: ${telefono}</p>
-<p>Ver en el <a href="https://oroblanco.puntoindigo.com/admin/viajes">panel de control</a>.</p>`,
+        await resend.emails.send({ from: `Oro Blanco <no-reply@puntoindigo.com>`, to: ADMIN_EMAIL.trim(), subject, html });
+      } else if (EMAIL_PASSWORD) {
+        const nodemailer = await import("nodemailer");
+        const transporter = nodemailer.createTransport({
+          host: "smtp.gmail.com", port: 587, secure: false,
+          auth: { user: EMAIL_FROM, pass: EMAIL_PASSWORD },
         });
-      } catch {
-        // No bloquear la respuesta si falla el email
+        await transporter.sendMail({ from: `Oro Blanco <${EMAIL_FROM}>`, to: ADMIN_EMAIL, subject, html });
       }
+    } catch {
+      // No bloquear la respuesta si falla el email
     }
 
     return NextResponse.json({ ok: true, id: viaje.id });

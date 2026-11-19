@@ -55,8 +55,8 @@ const PILARES = [
   },
   {
     icon: "⚡",
-    titulo: "Presupuesto en 2 horas",
-    desc: "Completás el formulario y en menos de 2 horas tenés precio y fecha de salida confirmados.",
+    titulo: "Presupuesto rápido",
+    desc: "Completás el formulario y te respondemos a la brevedad con el precio y fecha de salida.",
   },
 ];
 
@@ -314,7 +314,7 @@ export default function Home() {
               Pedí tu presupuesto
             </h2>
             <p className="text-white/70 mt-3 text-sm sm:text-base">
-              Completá el formulario y en menos de 2 horas recibís el precio y la fecha de salida.
+              Completá el formulario y te respondemos a la brevedad con el precio y la fecha de salida.
             </p>
           </div>
           <PresupuestoForm />
