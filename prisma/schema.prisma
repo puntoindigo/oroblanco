@@ -1,0 +1,61 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum EstadoPresupuesto {
+  NUEVO
+  VISTO
+  EN_PROCESO
+  CERRADO
+}
+
+enum EstadoViaje {
+  PROGRAMADO
+  EN_CURSO
+  ENTREGADO
+  CANCELADO
+}
+
+model Presupuesto {
+  id            String             @id @default(cuid())
+  nombre        String
+  empresa       String?
+  telefono      String
+  email         String
+  origen        String
+  destino       String
+  tipoCarga     String
+  peso          String?
+  fechaEstimada DateTime?
+  mensaje       String?
+  estado        EstadoPresupuesto  @default(NUEVO)
+  utmSource     String?
+  utmCampaign   String?
+  createdAt     DateTime           @default(now())
+  viaje         Viaje?             @relation(fields: [viajeId], references: [id])
+  viajeId       String?
+}
+
+model Viaje {
+  id           String       @id @default(cuid())
+  fecha        DateTime
+  origen       String
+  destino      String
+  tipoCarga    String
+  peso         Float?
+  cliente      String
+  clienteEmail String?
+  clienteTel   String?
+  precio       Float
+  estado       EstadoViaje  @default(PROGRAMADO)
+  notas        String?
+  nroRemito    String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  presupuestos Presupuesto[]
+}
