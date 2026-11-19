@@ -32,6 +32,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       ...(body.nroRemito !== undefined && { nroRemito: body.nroRemito || null }),
       ...(body.vehiculoId !== undefined && { vehiculoId: body.vehiculoId || null }),
       ...(body.mensaje !== undefined && { mensaje: body.mensaje || null }),
+      ...(body.clienteId !== undefined && { clienteId: body.clienteId || null }),
     },
   });
 

@@ -9,14 +9,16 @@ const LABELS: Record<string, string> = {
   vehiculos: "Vehículos",
   gastos: "Gastos",
   facturas: "Facturas",
+  clientes: "Clientes",
   usuarios: "Usuarios",
-  nuevo: "Nuevo viaje",
+  nuevo: "Nuevo",
 };
 
 function segmentLabel(seg: string, prev?: string): string {
   if (LABELS[seg]) return LABELS[seg];
-  // IDs de viaje (cuid/uuid) → "Editar viaje"
+  // IDs de entidades → "Editar X"
   if (prev === "viajes") return "Editar viaje";
+  if (prev === "clientes") return "Perfil";
   return seg;
 }
 

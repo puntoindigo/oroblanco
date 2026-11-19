@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { PROVINCIAS, TIPOS_CARGA } from "@/lib/constants";
+import ClienteCombobox from "@/components/admin/cliente-combobox";
 
 type VehiculoOpt = { id: string; patente: string; marca: string; modelo: string };
 type FacturaItem = { id: string; tipo: string; puntoVenta: string; numero: string; total: number; viajeId: string | null };
@@ -19,6 +20,7 @@ type ViajeData = {
   empresa: string | null;
   clienteEmail: string | null;
   clienteTel: string | null;
+  clienteId: string | null;
   precio: number | null;
   notas: string | null;
   nroRemito: string | null;
@@ -83,6 +85,10 @@ export default function ViajeForm({
   const [disponibles, setDisponibles] = useState(facturasDisponibles);
   const [linkingId, setLinkingId] = useState("");
   const [linking, setLinking] = useState(false);
+  const [clienteId, setClienteId] = useState<string | null>(viaje?.clienteId ?? null);
+  const [clienteNombre, setClienteNombre] = useState<string | null>(
+    viaje?.clienteId ? (viaje.empresa ? `${viaje.cliente} (${viaje.empresa})` : viaje.cliente) : null
+  );
 
   const isEdit = !!viaje;
 
@@ -100,6 +106,16 @@ export default function ViajeForm({
     data.fecha = fromArgDate(fechaStr);
     // Normalizar precio (quitar separadores de miles)
     data.precio = parsePesos(precioStr);
+    // Cliente seleccionado — propagar clienteId y también el nombre de texto (campo requerido en DB)
+    if (clienteId) {
+      data.clienteId = clienteId;
+      if (clienteNombre && !data.cliente) data.cliente = clienteNombre;
+    }
+    if (!data.cliente && !clienteId) {
+      setError("Seleccioná un cliente.");
+      setLoading(false);
+      return;
+    }
 
     const url = isEdit ? `/api/viajes/${viaje!.id}` : "/api/viajes";
     const method = isEdit ? "PATCH" : "POST";
@@ -167,10 +183,25 @@ export default function ViajeForm({
             />
           </div>
 
-          <Field label="Cliente *" name="cliente" required placeholder="Nombre o empresa" defaultValue={viaje?.cliente} />
-          <Field label="Empresa" name="empresa" placeholder="Razón social" defaultValue={viaje?.empresa ?? ""} />
-          <Field label="Teléfono" name="clienteTel" type="tel" placeholder="341 555-0000" defaultValue={viaje?.clienteTel ?? ""} />
-          <Field label="Email" name="clienteEmail" type="email" placeholder="cliente@email.com" defaultValue={viaje?.clienteEmail ?? ""} />
+          {/* Cliente */}
+          <div className="sm:col-span-2 flex flex-col gap-1.5">
+            <label className="text-[#4A5568] text-xs font-medium uppercase tracking-wider">
+              Cliente *{" "}
+              {clienteId && (
+                <a href={`/admin/clientes/${clienteId}`} className="normal-case font-normal text-[#1E3A5F] hover:underline ml-1">
+                  ver perfil →
+                </a>
+              )}
+            </label>
+            <ClienteCombobox
+              value={clienteId}
+              clienteNombre={clienteNombre ?? undefined}
+              onChange={(id, c) => {
+                setClienteId(id);
+                setClienteNombre(id && c ? (c.empresa ? `${c.nombre} (${c.empresa})` : c.nombre) : null);
+              }}
+            />
+          </div>
 
           <ProvinciasSelect label="Origen *" name="origen" required defaultValue={viaje?.origen ?? ""} />
           <ProvinciasSelect label="Destino *" name="destino" required defaultValue={viaje?.destino ?? ""} />

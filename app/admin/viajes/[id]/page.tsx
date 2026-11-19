@@ -9,7 +9,7 @@ export default async function EditarViajePage({
 }) {
   const { id } = await params;
   const [viaje, vehiculos, facturasVinculadas, facturasDisponibles] = await Promise.all([
-    prisma.viaje.findUnique({ where: { id } }),
+    prisma.viaje.findUnique({ where: { id }, include: { clienteRel: { select: { nombre: true, empresa: true } } } }),
     prisma.vehiculo.findMany({
       where: { activo: true },
       select: { id: true, patente: true, marca: true, modelo: true },

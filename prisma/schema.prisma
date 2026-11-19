@@ -28,6 +28,19 @@ enum TipoGasto {
   OTRO
 }
 
+model Cliente {
+  id        String   @id @default(cuid())
+  nombre    String
+  empresa   String?
+  email     String?
+  tel       String?
+  cuit      String?
+  notas     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  viajes    Viaje[]
+}
+
 model AdminUser {
   id        String   @id @default(cuid())
   email     String   @unique
@@ -69,6 +82,8 @@ model Viaje {
   notas         String?
   vehiculoId    String?
   vehiculo      Vehiculo?   @relation(fields: [vehiculoId], references: [id])
+  clienteId     String?
+  clienteRel    Cliente?    @relation(fields: [clienteId], references: [id])
   gastos        Gasto[]
   facturas      Factura[]
   utmSource     String?

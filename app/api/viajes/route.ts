@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
   const {
     fecha, fechaSolicitud, origen, destino, tipoCarga,
     pesoVgm, tara, cliente, empresa, clienteEmail, clienteTel,
-    precio, precioConIva, notas, nroRemito, estado, vehiculoId, mensaje,
+    precio, precioConIva, notas, nroRemito, estado, vehiculoId, mensaje, clienteId,
   } = body;
 
   const viaje = await prisma.viaje.create({
@@ -33,6 +33,7 @@ export async function POST(req: NextRequest) {
       estado: estado || "PENDIENTE",
       vehiculoId: vehiculoId || null,
       mensaje: mensaje || null,
+      clienteId: clienteId || null,
     },
   });
 
