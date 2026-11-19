@@ -19,10 +19,9 @@ export function middleware(req: NextRequest) {
     );
   }
 
-  if (isLoginPage && hasCookie) {
-    return NextResponse.redirect(new URL("/admin", req.url));
-  }
-
+  // No redirigimos desde /admin/login aunque haya cookie — dejar que el
+  // server component verifique la sesión. Si hiciéramos redirect aquí con
+  // una cookie inválida, caeríamos en loop: middleware→/admin→layout→/admin/login→...
   return NextResponse.next();
 }
 

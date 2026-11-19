@@ -25,12 +25,7 @@ export default function AdminSidebar({
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const appUrl = typeof window !== "undefined" ? window.location.origin : "";
-  const accountsUrl =
-    typeof window !== "undefined"
-      ? (process.env.NEXT_PUBLIC_ACCOUNTS_URL ?? "https://accounts.puntoindigo.com")
-      : "https://accounts.puntoindigo.com";
-  const logoutUrl = `${accountsUrl}/api/auth/logout?next=${encodeURIComponent(appUrl + "/admin/login")}`;
+  const logoutUrl = "/api/auth/logout";
 
   const currentPage = NAV.find(({ href }) =>
     href === "/admin" ? pathname === "/admin" : pathname.startsWith(href)
