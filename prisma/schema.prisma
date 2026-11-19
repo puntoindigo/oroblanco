@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("POSTGRES_PRISMA_URL")
+  directUrl = env("DATABASE_URL_UNPOOLED")
 }
 
 enum EstadoPresupuesto {
@@ -39,6 +40,13 @@ model Presupuesto {
   createdAt     DateTime           @default(now())
   viaje         Viaje?             @relation(fields: [viajeId], references: [id])
   viajeId       String?
+}
+
+model AdminUser {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  addedBy   String?
+  createdAt DateTime @default(now())
 }
 
 model Viaje {
