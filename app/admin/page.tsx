@@ -121,20 +121,16 @@ export default async function PanelControl() {
             <span className="text-sm font-semibold text-[#0F1A2E]">Facturación por mes</span>
             <span className="text-xs text-[#4A5568]">— desde el inicio</span>
           </div>
-          <div className="flex items-center gap-3">
-            <Link
-              href="/admin/facturas"
-              onClick={(e) => e.stopPropagation()}
-              className="text-xs text-[#1E3A5F] hover:underline"
-            >
-              Ver facturas →
-            </Link>
-            <span className="text-[#4A5568] text-xs group-open:rotate-180 transition-transform duration-200 inline-block">▼</span>
-          </div>
+          <span className="text-[#4A5568] text-xs group-open:rotate-180 transition-transform duration-200 inline-block">▼</span>
         </summary>
         <div className="px-5 pb-5 border-t border-gray-50">
           <div className="pt-4">
             <FacturacionChart data={stats.chartData} />
+          </div>
+          <div className="mt-3 text-right">
+            <Link href="/admin/facturas" className="text-xs text-[#1E3A5F] hover:underline">
+              Ver todas las facturas →
+            </Link>
           </div>
         </div>
       </details>
