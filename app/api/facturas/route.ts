@@ -23,7 +23,10 @@ export async function GET(req: NextRequest) {
       ...(fechaDesde && { fecha: { gte: fechaDesde, lte: fechaHasta } }),
       ...(movimiento && { movimiento }),
     },
-    include: { viaje: { select: { origen: true, destino: true, cliente: true } } },
+    include: {
+      viaje: { select: { origen: true, destino: true, cliente: true } },
+      pagos: { include: { pago: { select: { id: true, monto: true, nroCheque: true, fechaAcreditacion: true } } } },
+    },
     orderBy: { fecha: "desc" },
   });
 

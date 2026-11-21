@@ -11,6 +11,9 @@ const NAV = [
   { href: "/admin/gastos", label: "Gastos", icon: "💸" },
   { href: "/admin/facturas", label: "Facturas", icon: "🧾" },
   { href: "/admin/clientes", label: "Clientes", icon: "👤" },
+  { href: "/admin/empleados", label: "Empleados", icon: "👷" },
+  { href: "/admin/pagos", label: "Pagos / Cheques", icon: "💳" },
+  { href: "/admin/documentos", label: "Documentos", icon: "📂" },
   { href: "/admin/usuarios", label: "Usuarios", icon: "👥" },
 ];
 

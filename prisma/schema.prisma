@@ -39,6 +39,7 @@ model Cliente {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   viajes    Viaje[]
+  pagos     Pago[]
 }
 
 model AdminUser {
@@ -48,48 +49,72 @@ model AdminUser {
   createdAt DateTime @default(now())
 }
 
+model Empleado {
+  id           String      @id @default(cuid())
+  legajo       String?     @unique
+  nombre       String
+  apellido     String?
+  cuit         String?
+  cct          String?
+  categoria    String?
+  activo       Boolean     @default(true)
+  fechaIngreso DateTime?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  viajes       Viaje[]
+  documentos   Documento[]
+}
+
 model Vehiculo {
-  id        String   @id @default(cuid())
-  patente   String   @unique
-  marca     String
-  modelo    String
-  anio      Int?
-  tipo      String   @default("Camión")
-  activo    Boolean  @default(true)
-  createdAt DateTime @default(now())
-  viajes    Viaje[]
-  gastos    Gasto[]
+  id         String      @id @default(cuid())
+  patente    String      @unique
+  marca      String
+  modelo     String
+  anio       Int?
+  tipo       String      @default("Camión")
+  motor      String?
+  chasis     String?
+  vtoSeguro  DateTime?
+  activo     Boolean     @default(true)
+  createdAt  DateTime    @default(now())
+  viajes     Viaje[]
+  gastos     Gasto[]
+  documentos Documento[]
 }
 
 model Viaje {
-  id            String      @id @default(cuid())
-  estado        EstadoViaje @default(PRESUPUESTO)
-  fecha         DateTime?
+  id             String      @id @default(cuid())
+  estado         EstadoViaje @default(PRESUPUESTO)
+  fecha          DateTime?
   fechaSolicitud DateTime?
-  origen        String
-  destino       String
-  tipoCarga     String      @default("Carga General")
-  pesoVgm       Float?
-  tara          Float?
-  cliente       String
-  empresa       String?
-  clienteEmail  String?
-  clienteTel    String?
-  precio        Float?
-  precioConIva  Boolean  @default(true)
-  nroRemito     String?
-  mensaje       String?
-  notas         String?
-  vehiculoId    String?
-  vehiculo      Vehiculo?   @relation(fields: [vehiculoId], references: [id])
-  clienteId     String?
-  clienteRel    Cliente?    @relation(fields: [clienteId], references: [id])
-  gastos        Gasto[]
-  facturas      Factura[]
-  utmSource     String?
-  utmCampaign   String?
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  origen         String
+  destino        String
+  tipoCarga      String      @default("Carga General")
+  pesoVgm        Float?
+  tara           Float?
+  kms            Float?
+  cliente        String
+  empresa        String?
+  clienteEmail   String?
+  clienteTel     String?
+  precio         Float?
+  precioConIva   Boolean     @default(true)
+  nroRemito      String?
+  mensaje        String?
+  notas          String?
+  vehiculoId     String?
+  vehiculo       Vehiculo?   @relation(fields: [vehiculoId], references: [id])
+  clienteId      String?
+  clienteRel     Cliente?    @relation(fields: [clienteId], references: [id])
+  empleadoId     String?
+  empleado       Empleado?   @relation(fields: [empleadoId], references: [id])
+  gastos         Gasto[]
+  facturas       Factura[]
+  documentos     Documento[]
+  utmSource      String?
+  utmCampaign    String?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
 }
 
 model Gasto {
@@ -107,21 +132,73 @@ model Gasto {
 }
 
 model Factura {
-  id            String   @id @default(cuid())
-  movimiento    String   @default("emitida")
+  id            String        @id @default(cuid())
+  movimiento    String        @default("emitida")
   tipo          String
   puntoVenta    String
   numero        String
   fecha         DateTime
   cuit          String
   razonSocial   String
-  montoNeto     Float    @default(0)
-  iva           Float    @default(0)
-  otrosTributos Float    @default(0)
+  montoNeto     Float         @default(0)
+  iva           Float         @default(0)
+  otrosTributos Float         @default(0)
   total         Float
+  estado        String        @default("pendiente")
   viajeId       String?
-  viaje         Viaje?   @relation(fields: [viajeId], references: [id])
-  createdAt     DateTime @default(now())
+  viaje         Viaje?        @relation(fields: [viajeId], references: [id])
+  pagos         PagoFactura[]
+  createdAt     DateTime      @default(now())
 
   @@unique([movimiento, puntoVenta, numero])
+}
+
+model Pago {
+  id                String        @id @default(cuid())
+  fecha             DateTime
+  fechaAcreditacion DateTime?
+  emisorCuit        String?
+  emisorNombre      String?
+  clienteId         String?
+  cliente           Cliente?      @relation(fields: [clienteId], references: [id])
+  tipo              String        @default("cheque_cpd")
+  nroCheque         String?
+  idCheque          String?       @unique
+  cmc7              String?
+  monto             Float
+  concepto          String?
+  motivo            String?
+  archivoUrl        String?
+  notas             String?
+  createdAt         DateTime      @default(now())
+  facturas          PagoFactura[]
+}
+
+model PagoFactura {
+  id            String   @id @default(cuid())
+  pagoId        String
+  pago          Pago     @relation(fields: [pagoId], references: [id], onDelete: Cascade)
+  facturaId     String
+  factura       Factura  @relation(fields: [facturaId], references: [id], onDelete: Cascade)
+  montoAplicado Float?
+  createdAt     DateTime @default(now())
+
+  @@unique([pagoId, facturaId])
+}
+
+model Documento {
+  id         String    @id @default(cuid())
+  tipo       String    // seguro_vehiculo | recibo_sueldo | gasto_combustible | comprobante_pago | otro
+  nombre     String
+  url        String?
+  fecha      DateTime?
+  monto      Float?
+  empleadoId String?
+  empleado   Empleado? @relation(fields: [empleadoId], references: [id])
+  vehiculoId String?
+  vehiculo   Vehiculo? @relation(fields: [vehiculoId], references: [id])
+  viajeId    String?
+  viaje      Viaje?    @relation(fields: [viajeId], references: [id])
+  notas      String?
+  createdAt  DateTime  @default(now())
 }
