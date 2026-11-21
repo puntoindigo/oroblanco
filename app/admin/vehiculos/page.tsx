@@ -6,7 +6,7 @@ import { TIPOS_VEHICULO } from "@/lib/constants";
 type Vehiculo = {
   id: string; patente: string; marca: string; modelo: string;
   anio: number | null; tipo: string; activo: boolean;
-  motor?: string | null; chasis?: string | null; vtoSeguro?: string | null;
+  motor?: string | null; chasis?: string | null;
 };
 
 export default function VehiculosPage() {
@@ -115,14 +115,7 @@ export default function VehiculosPage() {
                     )}
                   </td>
                   <td className="px-4 py-3 text-xs text-[#4A5568]">{v.anio ?? "—"}</td>
-                  <td className="px-4 py-3 text-xs text-[#4A5568]">
-                    {v.tipo}
-                    {v.vtoSeguro && (
-                      <span className="block text-[10px] text-amber-600">
-                        Seguro vto: {new Date(v.vtoSeguro).toLocaleDateString("es-AR")}
-                      </span>
-                    )}
-                  </td>
+                  <td className="px-4 py-3 text-xs text-[#4A5568]">{v.tipo}</td>
                   <td className="px-4 py-3">
                     <button onClick={() => toggleActivo(v)}
                       className={`text-xs font-semibold px-2 py-0.5 rounded-full ${v.activo ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-500"}`}>

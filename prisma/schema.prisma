@@ -74,7 +74,6 @@ model Vehiculo {
   tipo       String      @default("Camión")
   motor      String?
   chasis     String?
-  vtoSeguro  DateTime?
   activo     Boolean     @default(true)
   createdAt  DateTime    @default(now())
   viajes     Viaje[]

@@ -33,7 +33,6 @@ async function main() {
     update: {
       motor: "36417915",
       chasis: "9BFVCE1N3DBB34861",
-      vtoSeguro: new Date("2027-11-19"),
     },
     create: {
       patente: "MKP987",
@@ -43,7 +42,6 @@ async function main() {
       tipo: "Camión Caja Metálica",
       motor: "36417915",
       chasis: "9BFVCE1N3DBB34861",
-      vtoSeguro: new Date("2027-11-19"),
       activo: true,
     },
   });
