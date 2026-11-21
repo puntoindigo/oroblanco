@@ -66,43 +66,37 @@ async function main() {
     console.log("✔ Cliente ya existe:", cliente.nombre);
   }
 
-  // ── Facturas 164 / 165 / 166 (upsert por número) ─────────────────────────
-  // Si ya existen en la DB (importadas de ARCA), las buscamos; si no, creamos placeholder.
+  // ── Limpiar placeholders creados por versiones anteriores del seed ──────────
+  const placeholders = await prisma.factura.findMany({
+    where: {
+      movimiento: "emitida",
+      puntoVenta: "0001",
+      total: 0,
+      numero: { in: ["164", "165", "166"] },
+      razonSocial: { startsWith: "CLIENTE CUIT" },
+    },
+  });
+  if (placeholders.length > 0) {
+    const ids = placeholders.map((f) => f.id);
+    await prisma.pagoFactura.deleteMany({ where: { facturaId: { in: ids } } });
+    await prisma.factura.deleteMany({ where: { id: { in: ids } } });
+    console.log(`🗑  Eliminados ${placeholders.length} placeholder(s) de facturas`);
+  }
+
+  // ── Facturas 164 / 165 / 166 — buscar las reales importadas de ARCA ───────
+  // ARCA exporta el número con ceros: "00000164". Buscamos por endsWith.
   const factNros = ["164", "165", "166"];
   const facturas = [];
   for (const nro of factNros) {
-    // Buscar por número (sin restricción de punto de venta, para no depender del formato)
-    let f = await prisma.factura.findFirst({
-      where: { numero: nro, movimiento: "emitida" },
+    const f = await prisma.factura.findFirst({
+      where: { numero: { endsWith: nro }, movimiento: "emitida" },
     });
-    if (!f) {
-      // Crear placeholder — el usuario puede actualizarla con los datos reales
-      try {
-        f = await prisma.factura.create({
-          data: {
-            movimiento: "emitida",
-            tipo: "FACTURA A",
-            puntoVenta: "0001",
-            numero: nro,
-            fecha: new Date("2026-11-01"),
-            cuit: "23-35250140-9",
-            razonSocial: "CLIENTE CUIT 23-35250140-9",
-            montoNeto: 0,
-            iva: 0,
-            total: 0,
-            estado: "pendiente",
-          },
-        });
-        console.log(`✔ Factura ${nro} creada (placeholder — completar importe)`);
-      } catch {
-        // Ya existe con otro puntoVenta; buscar de nuevo sin filtro
-        f = await prisma.factura.findFirst({ where: { numero: nro } });
-        console.log(`✔ Factura ${nro} encontrada:`, f?.id);
-      }
+    if (f) {
+      console.log(`✔ Factura ${nro} encontrada: ${f.puntoVenta}-${f.numero} (${f.razonSocial})`);
+      facturas.push(f);
     } else {
-      console.log(`✔ Factura ${nro} ya existe:`, f.id);
+      console.warn(`⚠  Factura terminada en ${nro} no encontrada — importar desde ARCA primero`);
     }
-    if (f) facturas.push(f);
   }
 
   // ── 7 Cheques CPD → Pagos ─────────────────────────────────────────────────
