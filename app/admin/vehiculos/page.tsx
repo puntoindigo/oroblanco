@@ -1,7 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { TIPOS_VEHICULO } from "@/lib/constants";
+import { useKeyboardList } from "@/lib/hooks/useKeyboardList";
+import { useAdminKeyboardContext } from "@/lib/hooks/useAdminKeyboard";
 
 type Vehiculo = {
   id: string; patente: string; marca: string; modelo: string;
@@ -40,6 +42,14 @@ export default function VehiculosPage() {
       setAdding(false);
     }
   }
+
+  const listItems = useMemo(
+    () => vehiculos.map((v) => ({ id: v.id, href: "/admin/vehiculos" })),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [vehiculos.map((v) => v.id).join(",")]
+  );
+  useKeyboardList(listItems, "/admin/vehiculos");
+  const { activeId } = useAdminKeyboardContext();
 
   async function toggleActivo(v: Vehiculo) {
     await fetch(`/api/vehiculos/${v.id}`, {
@@ -104,7 +114,11 @@ export default function VehiculosPage() {
             </thead>
             <tbody>
               {vehiculos.map((v) => (
-                <tr key={v.id} className="border-b border-gray-50 hover:bg-[#F8F8F4]">
+                <tr key={v.id} className={`border-b border-gray-50 transition-colors ${
+                  activeId === v.id
+                    ? "bg-[#C9A84C]/10 outline outline-1 outline-[#C9A84C]/40"
+                    : "hover:bg-[#F8F8F4]"
+                }`}>
                   <td className="px-4 py-3 font-mono font-semibold text-[#0F1A2E]">{v.patente}</td>
                   <td className="px-4 py-3 text-[#0F1A2E]">
                     {v.marca} {v.modelo}

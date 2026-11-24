@@ -1,7 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { TIPOS_GASTO } from "@/lib/constants";
+import { useKeyboardList } from "@/lib/hooks/useKeyboardList";
+import { useAdminKeyboardContext } from "@/lib/hooks/useAdminKeyboard";
 
 type Gasto = {
   id: string; fecha: string; descripcion: string; monto: number; tipo: string;
@@ -65,6 +67,14 @@ export default function GastosPage() {
     await fetch(`/api/gastos/${id}`, { method: "DELETE" });
     setGastos((prev) => prev.filter((g) => g.id !== id));
   }
+
+  const listItems = useMemo(
+    () => gastos.map((g) => ({ id: g.id, href: "/admin/gastos" })),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [gastos.map((g) => g.id).join(",")]
+  );
+  useKeyboardList(listItems, "/admin/gastos");
+  const { activeId } = useAdminKeyboardContext();
 
   const totalMes = gastos
     .filter((g) => new Date(g.fecha).getMonth() === new Date().getMonth())
@@ -134,7 +144,11 @@ export default function GastosPage() {
               </thead>
               <tbody>
                 {gastos.map((g) => (
-                  <tr key={g.id} className="border-b border-gray-50 hover:bg-[#F8F8F4]">
+                  <tr key={g.id} className={`border-b border-gray-50 transition-colors ${
+                    activeId === g.id
+                      ? "bg-[#C9A84C]/10 outline outline-1 outline-[#C9A84C]/40"
+                      : "hover:bg-[#F8F8F4]"
+                  }`}>
                     <td className="px-4 py-3 text-xs text-[#4A5568] whitespace-nowrap">
                       {new Date(g.fecha).toLocaleDateString("es-AR", { timeZone: "UTC" })}
                     </td>

@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { useKeyboardList } from "@/lib/hooks/useKeyboardList";
+import { useAdminKeyboardContext } from "@/lib/hooks/useAdminKeyboard";
 
 type PagoFacturaItem = {
   factura: { numero: string; total: number; estado: string };
@@ -38,6 +40,14 @@ export default function PagosPage() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  const listItems = useMemo(
+    () => pagos.map((p) => ({ id: p.id, href: "/admin/pagos" })),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [pagos.map((p) => p.id).join(",")]
+  );
+  useKeyboardList(listItems, "/admin/pagos");
+  const { activeId } = useAdminKeyboardContext();
 
   const total = pagos.reduce((s, p) => s + p.monto, 0);
   const hoy = new Date();
@@ -158,7 +168,11 @@ export default function PagosPage() {
                     <tr
                       key={pago.id}
                       onClick={() => toggle(pago.id)}
-                      className={`cursor-pointer transition-colors ${selected.has(pago.id) ? "bg-amber-50" : "hover:bg-gray-50"}`}
+                      className={`cursor-pointer transition-colors ${
+                        activeId === pago.id
+                          ? "bg-[#C9A84C]/10 outline outline-1 outline-[#C9A84C]/40"
+                          : selected.has(pago.id) ? "bg-amber-50" : "hover:bg-gray-50"
+                      }`}
                     >
                       <td className="px-4 py-3">
                         <input

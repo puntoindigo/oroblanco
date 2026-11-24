@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
+import { useKeyboardList } from "@/lib/hooks/useKeyboardList";
+import { useAdminKeyboardContext } from "@/lib/hooks/useAdminKeyboard";
 
 type Factura = {
   id: string; movimiento: string; tipo: string; puntoVenta: string; numero: string;
@@ -111,6 +113,14 @@ export default function FacturasPage() {
     setFacturas((prev) => prev.filter((f) => f.id !== id));
   }
 
+  const listItems = useMemo(
+    () => facturas.map((f) => ({ id: f.id, href: "/admin/facturas" })),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [facturas.map((f) => f.id).join(",")]
+  );
+  useKeyboardList(listItems, "/admin/facturas");
+  const { activeId } = useAdminKeyboardContext();
+
   const total = facturas.reduce((s, f) => s + f.total, 0);
   const sinViaje = facturas.filter((f) => !f.viajeId).length;
   const exportUrl = `/api/facturas/export?movimiento=${movimiento}${mes ? `&mes=${mes}` : ""}`;
@@ -213,7 +223,11 @@ export default function FacturasPage() {
               </thead>
               <tbody>
                 {facturas.map((f) => (
-                  <tr key={f.id} className={`border-b border-gray-50 hover:bg-[#F8F8F4] ${!f.viajeId ? "bg-amber-50/40" : ""}`}>
+                  <tr key={f.id} className={`border-b border-gray-50 transition-colors ${
+                    activeId === f.id
+                      ? "bg-[#C9A84C]/10 outline outline-1 outline-[#C9A84C]/40"
+                      : !f.viajeId ? "bg-amber-50/40 hover:bg-[#F8F8F4]" : "hover:bg-[#F8F8F4]"
+                  }`}>
                     <td className="px-4 py-3 text-xs text-[#4A5568] whitespace-nowrap">
                       {new Date(f.fecha).toLocaleDateString("es-AR", { timeZone: "UTC" })}
                     </td>
