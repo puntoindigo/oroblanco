@@ -3,18 +3,20 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import OBIsotipo from "@/components/OBIsotipo";
+import { useAdminKeyboardContext } from "@/lib/hooks/useAdminKeyboard";
 
 const NAV = [
-  { href: "/admin", label: "Panel de control", icon: "📊" },
-  { href: "/admin/viajes", label: "Viajes", icon: "🚛" },
-  { href: "/admin/vehiculos", label: "Vehículos", icon: "🚐" },
-  { href: "/admin/gastos", label: "Gastos", icon: "💸" },
-  { href: "/admin/facturas", label: "Facturas", icon: "🧾" },
-  { href: "/admin/clientes", label: "Clientes", icon: "👤" },
-  { href: "/admin/empleados", label: "Empleados", icon: "👷" },
-  { href: "/admin/pagos", label: "Pagos / Cheques", icon: "💳" },
-  { href: "/admin/documentos", label: "Documentos", icon: "📂" },
-  { href: "/admin/usuarios", label: "Usuarios", icon: "👥" },
+  { href: "/admin", label: "Panel de control", icon: "📊", key: "H" },
+  { href: "/admin/viajes", label: "Viajes", icon: "🚛", key: "V" },
+  { href: "/admin/vehiculos", label: "Vehículos", icon: "🚐", key: null },
+  { href: "/admin/gastos", label: "Gastos", icon: "💸", key: "G" },
+  { href: "/admin/facturas", label: "Facturas", icon: "🧾", key: "F" },
+  { href: "/admin/clientes", label: "Clientes", icon: "👤", key: "C" },
+  { href: "/admin/empleados", label: "Empleados", icon: "👷", key: "E" },
+  { href: "/admin/pagos", label: "Pagos / Cheques", icon: "💳", key: "P" },
+  { href: "/admin/documentos", label: "Documentos", icon: "📂", key: "D" },
+  { href: "/admin/usuarios", label: "Usuarios", icon: "👥", key: "U" },
 ];
 
 export default function AdminSidebar({
@@ -36,11 +38,13 @@ export default function AdminSidebar({
     href === "/admin" ? pathname === "/admin" : pathname.startsWith(href)
   );
 
+  const { setHelpOpen } = useAdminKeyboardContext();
+
   const SidebarContent = () => (
     <>
       <div className="px-4 py-5 border-b border-white/10">
         <Link href="/admin" onClick={() => setMobileOpen(false)} className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded bg-[#C9A84C] flex items-center justify-center font-bold text-[#0F1A2E] text-xs">OB</div>
+          <OBIsotipo size={28} />
           <div>
             <div className="text-white font-bold text-sm leading-tight">ORO BLANCO</div>
             <div className="text-[#C9A84C] text-[9px] tracking-widest uppercase leading-none">Admin</div>
@@ -49,21 +53,28 @@ export default function AdminSidebar({
       </div>
 
       <nav className="flex-1 px-3 py-4 space-y-1">
-        {NAV.map(({ href, label, icon }) => {
+        {NAV.map(({ href, label, icon, key }) => {
           const active = href === "/admin" ? pathname === "/admin" : pathname.startsWith(href);
           return (
             <Link
               key={href}
               href={href}
               onClick={() => setMobileOpen(false)}
-              className={`flex items-center gap-2.5 px-3 py-2.5 rounded text-sm transition-colors ${
+              className={`flex items-center gap-2.5 px-3 py-2.5 rounded text-sm transition-colors group ${
                 active
                   ? "bg-[#C9A84C] text-[#0F1A2E] font-semibold"
                   : "text-white/70 hover:bg-white/10 hover:text-white"
               }`}
             >
               <span>{icon}</span>
-              {label}
+              <span className="flex-1">{label}</span>
+              {key && (
+                <kbd className={`hidden md:inline-flex items-center justify-center w-5 h-5 rounded text-[10px] font-mono font-bold border transition-opacity ${
+                  active
+                    ? "bg-[#0F1A2E]/20 border-[#0F1A2E]/30 text-[#0F1A2E]/60"
+                    : "bg-white/5 border-white/10 text-white/30 group-hover:opacity-100 opacity-0"
+                }`}>{key}</kbd>
+              )}
             </Link>
           );
         })}
@@ -91,6 +102,14 @@ export default function AdminSidebar({
           <span>🌐</span> Ver sitio
         </Link>
         <button
+          onClick={() => setHelpOpen(true)}
+          className="w-full flex items-center gap-2.5 px-3 py-2 rounded text-xs text-white/50 hover:text-white/80 transition-colors"
+        >
+          <span>⌨️</span>
+          <span className="flex-1 text-left">Atajos de teclado</span>
+          <kbd className="inline-flex items-center justify-center w-5 h-5 rounded text-[10px] font-mono font-bold bg-white/5 border border-white/10 text-white/30">?</kbd>
+        </button>
+        <button
           onClick={() => setConfirmLogout(true)}
           className="w-full flex items-center gap-2.5 px-3 py-2 rounded text-xs text-white/50 hover:text-white/80 transition-colors"
         >
@@ -105,7 +124,7 @@ export default function AdminSidebar({
       {/* ── Mobile top bar ── */}
       <div className="md:hidden fixed top-0 inset-x-0 z-30 h-14 bg-[#0F1A2E] border-b border-white/10 flex items-center justify-between px-4">
         <Link href="/admin" className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded bg-[#C9A84C] flex items-center justify-center font-bold text-[#0F1A2E] text-xs">OB</div>
+          <OBIsotipo size={26} />
           <div className="text-white font-bold text-sm">ORO BLANCO</div>
         </Link>
         <div className="flex items-center gap-3">

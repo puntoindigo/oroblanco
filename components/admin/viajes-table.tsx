@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ESTADO_VIAJE_LABELS, ESTADO_VIAJE_COLORS } from "@/lib/constants";
+import { useKeyboardList } from "@/lib/hooks/useKeyboardList";
+import { useAdminKeyboardContext } from "@/lib/hooks/useAdminKeyboard";
 
 type Vehiculo = { patente: string; marca: string; modelo: string } | null;
 type Viaje = {
@@ -52,6 +54,14 @@ export default function ViajesTable({ viajes }: { viajes: Viaje[] }) {
   const filtered = viajes
     .filter((v) => !filtro || v.estado === filtro)
     .filter((v) => !desde || (v.fecha && new Date(v.fecha) >= desde));
+
+  const listItems = useMemo(
+    () => filtered.map((v) => ({ id: v.id, href: `/admin/viajes/${v.id}` })),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [filtered.map((v) => v.id).join(",")]
+  );
+  useKeyboardList(listItems, "/admin/viajes/nuevo");
+  const { activeId } = useAdminKeyboardContext();
 
   async function changeEstado(id: string, estado: string) {
     setChangingId(id);
@@ -152,7 +162,14 @@ export default function ViajesTable({ viajes }: { viajes: Viaje[] }) {
               </thead>
               <tbody>
                 {filtered.map((v) => (
-                  <tr key={v.id} className="border-b border-gray-50 hover:bg-[#F8F8F4] transition-colors">
+                  <tr
+                    key={v.id}
+                    className={`border-b border-gray-50 transition-colors ${
+                      activeId === v.id
+                        ? "bg-[#C9A84C]/10 outline outline-1 outline-[#C9A84C]/40"
+                        : "hover:bg-[#F8F8F4]"
+                    }`}
+                  >
                     <td className="px-4 py-3">
                       <select
                         value={v.estado}
