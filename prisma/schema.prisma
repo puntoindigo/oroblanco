@@ -50,19 +50,33 @@ model AdminUser {
 }
 
 model Empleado {
-  id           String      @id @default(cuid())
-  legajo       String?     @unique
+  id           String          @id @default(cuid())
+  legajo       String?         @unique
   nombre       String
   apellido     String?
   cuit         String?
   cct          String?
   categoria    String?
-  activo       Boolean     @default(true)
+  activo       Boolean         @default(true)
   fechaIngreso DateTime?
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
   viajes       Viaje[]
   documentos   Documento[]
+  recibos      ReciboSueldo[]
+}
+
+model ReciboSueldo {
+  id          String   @id @default(cuid())
+  empleadoId  String
+  empleado    Empleado @relation(fields: [empleadoId], references: [id], onDelete: Cascade)
+  periodoAnio Int
+  periodoMes  Int
+  data        Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([empleadoId, periodoAnio, periodoMes])
 }
 
 model Vehiculo {

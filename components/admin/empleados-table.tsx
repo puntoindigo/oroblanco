@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import Link from "next/link";
 import { useKeyboardList } from "@/lib/hooks/useKeyboardList";
 import { useAdminKeyboardContext } from "@/lib/hooks/useAdminKeyboard";
 
@@ -19,7 +20,7 @@ type Empleado = {
 
 export default function EmpleadosTable({ empleados }: { empleados: Empleado[] }) {
   const listItems = useMemo(
-    () => empleados.map((e) => ({ id: e.id, href: "/admin/empleados" })),
+    () => empleados.map((e) => ({ id: e.id, href: `/admin/empleados/${e.id}` })),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [empleados.map((e) => e.id).join(",")]
   );
@@ -54,9 +55,9 @@ export default function EmpleadosTable({ empleados }: { empleados: Empleado[] })
                   {emp.legajo ?? "—"}
                 </td>
                 <td className="px-4 py-3">
-                  <span className="font-semibold text-[#0F1A2E]">
+                  <Link href={`/admin/empleados/${emp.id}`} className="font-semibold text-[#0F1A2E] hover:text-[#1E3A5F]">
                     {emp.apellido ? `${emp.apellido}, ${emp.nombre}` : emp.nombre}
-                  </span>
+                  </Link>
                   {emp.cuit && (
                     <span className="block text-xs text-[#4A5568]">CUIT {emp.cuit}</span>
                   )}
@@ -74,15 +75,14 @@ export default function EmpleadosTable({ empleados }: { empleados: Empleado[] })
                   {emp._count.viajes}
                 </td>
                 <td className="px-4 py-3">
-                  <span
-                    className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-                      emp.activo
-                        ? "bg-green-100 text-green-800"
-                        : "bg-gray-100 text-gray-500"
-                    }`}
-                  >
-                    {emp.activo ? "Activo" : "Inactivo"}
-                  </span>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${emp.activo ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-500"}`}>
+                      {emp.activo ? "Activo" : "Inactivo"}
+                    </span>
+                    <Link href={`/admin/empleados/${emp.id}`} className="text-xs text-[#1E3A5F] hover:underline">
+                      Recibos →
+                    </Link>
+                  </div>
                 </td>
               </tr>
             ))}
