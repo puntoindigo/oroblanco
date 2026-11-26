@@ -77,7 +77,11 @@ export default function GastosPage() {
   const { activeId } = useAdminKeyboardContext();
 
   const totalMes = gastos
-    .filter((g) => new Date(g.fecha).getMonth() === new Date().getMonth())
+    .filter((g) => {
+      const d = new Date(g.fecha);
+      const hoy = new Date();
+      return d.getUTCMonth() === hoy.getUTCMonth() && d.getUTCFullYear() === hoy.getUTCFullYear();
+    })
     .reduce((s, g) => s + g.monto, 0);
 
   return (
