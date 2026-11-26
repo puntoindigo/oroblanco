@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 
 type ClienteData = {
@@ -17,7 +17,12 @@ export default function ClienteForm({ cliente }: { cliente?: ClienteData }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [empresa, setEmpresa] = useState(cliente?.empresa ?? "");
   const isEdit = !!cliente;
+
+  const handleEmpresaChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setEmpresa(e.target.value);
+  }, []);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -50,26 +55,41 @@ export default function ClienteForm({ cliente }: { cliente?: ClienteData }) {
   return (
     <form onSubmit={handleSubmit} className="bg-white rounded-xl border border-gray-100 p-6 max-w-xl">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="sm:col-span-2 flex flex-col gap-1.5">
-          <label className="text-[#4A5568] text-xs font-medium uppercase tracking-wider">Nombre *</label>
-          <input
-            name="nombre"
-            required
-            defaultValue={cliente?.nombre}
-            placeholder="Juan García"
-            className="border border-gray-200 rounded px-3 py-2.5 text-sm focus:outline-none focus:border-[#C9A84C]"
-          />
-        </div>
+        {(!isEdit || !empresa.trim()) && (
+          <div className="sm:col-span-2 flex flex-col gap-1.5">
+            <label className="text-[#4A5568] text-xs font-medium uppercase tracking-wider">Nombre *</label>
+            <input
+              name="nombre"
+              required
+              defaultValue={cliente?.nombre}
+              placeholder="Juan García"
+              className="border border-gray-200 rounded px-3 py-2.5 text-sm focus:outline-none focus:border-[#C9A84C]"
+            />
+          </div>
+        )}
 
         <div className="sm:col-span-2 flex flex-col gap-1.5">
           <label className="text-[#4A5568] text-xs font-medium uppercase tracking-wider">Empresa</label>
           <input
             name="empresa"
-            defaultValue={cliente?.empresa ?? ""}
+            value={empresa}
+            onChange={handleEmpresaChange}
             placeholder="Razón social"
             className="border border-gray-200 rounded px-3 py-2.5 text-sm focus:outline-none focus:border-[#C9A84C]"
           />
         </div>
+
+        {isEdit && empresa.trim() && (
+          <div className="sm:col-span-2 flex flex-col gap-1.5">
+            <label className="text-[#4A5568] text-xs font-medium uppercase tracking-wider">Nombre del contacto</label>
+            <input
+              name="nombre"
+              defaultValue={cliente?.nombre}
+              placeholder="Juan García"
+              className="border border-gray-200 rounded px-3 py-2.5 text-sm focus:outline-none focus:border-[#C9A84C]"
+            />
+          </div>
+        )}
 
         <div className="flex flex-col gap-1.5">
           <label className="text-[#4A5568] text-xs font-medium uppercase tracking-wider">Teléfono</label>
