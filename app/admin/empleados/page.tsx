@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import Link from "next/link";
 import EmpleadosTable from "@/components/admin/empleados-table";
 
 export const dynamic = "force-dynamic";
@@ -25,6 +26,12 @@ export default async function EmpleadosPage() {
             {empleados.filter((e) => e.activo).length} activos · {empleados.length} total
           </p>
         </div>
+        <Link
+          href="/admin/empleados/nuevo"
+          className="bg-[#C9A84C] text-[#0F1A2E] font-bold px-4 py-2 rounded text-sm hover:bg-[#E8C96A] transition-colors"
+        >
+          + Nuevo empleado
+        </Link>
       </div>
       <EmpleadosTable empleados={empleados} />
     </div>

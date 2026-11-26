@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import Link from "next/link";
 import { useKeyboardList } from "@/lib/hooks/useKeyboardList";
 import { useAdminKeyboardContext } from "@/lib/hooks/useAdminKeyboard";
 
@@ -38,6 +39,7 @@ export default function EmpleadosTable({ empleados }: { empleados: Empleado[] })
               <th className="px-4 py-3 text-left font-semibold text-[#4A5568] hidden md:table-cell">Ingreso</th>
               <th className="px-4 py-3 text-left font-semibold text-[#4A5568] hidden md:table-cell">Viajes</th>
               <th className="px-4 py-3 text-left font-semibold text-[#4A5568]">Estado</th>
+              <th className="px-4 py-3" />
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">
@@ -83,6 +85,14 @@ export default function EmpleadosTable({ empleados }: { empleados: Empleado[] })
                   >
                     {emp.activo ? "Activo" : "Inactivo"}
                   </span>
+                </td>
+                <td className="px-4 py-3 text-right">
+                  <Link
+                    href={`/admin/empleados/${emp.id}/editar`}
+                    className="text-xs text-[#1E3A5F] hover:underline"
+                  >
+                    Editar
+                  </Link>
                 </td>
               </tr>
             ))}
