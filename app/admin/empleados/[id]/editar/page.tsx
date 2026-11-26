@@ -1,13 +1,13 @@
-import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import EmpleadoForm from "@/components/admin/empleado-form";
+import { resolverEmpleado } from "@/lib/empleado-slug";
 
 export const dynamic = "force-dynamic";
 
 export default async function EditarEmpleadoPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const emp = await prisma.empleado.findUnique({ where: { id } });
+  const { id: slug } = await params;
+  const emp = await resolverEmpleado(slug);
   if (!emp) notFound();
 
   const initial = {
@@ -15,9 +15,7 @@ export default async function EditarEmpleadoPage({ params }: { params: Promise<{
     apellido: emp.apellido ?? "",
     cuit: emp.cuit ?? "",
     categoria: emp.categoria ?? "",
-    fechaIngreso: emp.fechaIngreso
-      ? emp.fechaIngreso.toISOString().split("T")[0]
-      : "",
+    fechaIngreso: emp.fechaIngreso ? emp.fechaIngreso.toISOString().split("T")[0] : "",
     activo: emp.activo,
   };
 
@@ -32,7 +30,7 @@ export default async function EditarEmpleadoPage({ params }: { params: Promise<{
       </div>
       <h1 className="text-2xl font-bold text-[#0F1A2E] mb-1">Editar datos de empleado</h1>
       <p className="text-[#4A5568] text-sm mb-6">{nombre}</p>
-      <EmpleadoForm empleadoId={id} initial={initial} />
+      <EmpleadoForm empleadoId={emp.id} initial={initial} />
     </div>
   );
 }

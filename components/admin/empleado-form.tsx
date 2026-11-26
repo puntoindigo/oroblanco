@@ -33,35 +33,10 @@ const EMPTY: EmpleadoValues = {
   activo: true,
 };
 
-/** Acepta DD/MM/YYYY o YYYY-MM-DD y devuelve YYYY-MM-DD para la API, o null si vacío */
-function parseFecha(raw: string): string | null {
-  const s = raw.trim();
-  if (!s) return null;
-  // DD/MM/YYYY → YYYY-MM-DD
-  const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-  if (m) return `${m[3]}-${m[2].padStart(2, "0")}-${m[1].padStart(2, "0")}`;
-  // Ya es ISO o similar
-  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
-  return null;
-}
-
-/** Convierte YYYY-MM-DD a DD/MM/YYYY para mostrar */
-function isoToDisplay(iso: string): string {
-  if (!iso) return "";
-  const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (m) return `${m[3]}/${m[2]}/${m[1]}`;
-  return iso;
-}
-
 export default function EmpleadoForm({ empleadoId, initial }: Props) {
   const router = useRouter();
   const isEdit = !!empleadoId;
-
-  const [v, setV] = useState<EmpleadoValues>({
-    ...EMPTY,
-    ...initial,
-    fechaIngreso: initial?.fechaIngreso ? isoToDisplay(initial.fechaIngreso) : "",
-  });
+  const [v, setV] = useState<EmpleadoValues>({ ...EMPTY, ...initial });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -74,19 +49,12 @@ export default function EmpleadoForm({ empleadoId, initial }: Props) {
     setLoading(true);
     setError("");
 
-    const fechaIso = parseFecha(v.fechaIngreso);
-    if (v.fechaIngreso.trim() && !fechaIso) {
-      setError("Fecha inválida. Usá DD/MM/YYYY.");
-      setLoading(false);
-      return;
-    }
-
     const body = {
       nombre: v.nombre.trim(),
       apellido: v.apellido.trim() || null,
       cuit: v.cuit.trim() || null,
       categoria: v.categoria.trim() || null,
-      fechaIngreso: fechaIso,
+      fechaIngreso: v.fechaIngreso || null,
       activo: v.activo,
     };
 
@@ -158,10 +126,9 @@ export default function EmpleadoForm({ empleadoId, initial }: Props) {
           <div>
             <label className="block text-xs text-[#4A5568] uppercase tracking-wider mb-1">Fecha de ingreso</label>
             <input
-              type="text"
+              type="date"
               value={v.fechaIngreso}
               onChange={(e) => set("fechaIngreso", e.target.value)}
-              placeholder="DD/MM/YYYY"
               className="w-full border border-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-[#C9A84C]"
             />
           </div>
