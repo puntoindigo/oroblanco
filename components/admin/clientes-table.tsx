@@ -62,7 +62,6 @@ export default function ClientesTable({ clientes }: { clientes: Cliente[] }) {
                   <Link href={`/admin/clientes/${c.id}`} className="font-medium text-[#0F1A2E] hover:text-[#1E3A5F]">
                     {clienteLabel(c)}
                   </Link>
-                  {c.empresa && <p className="text-xs text-[#4A5568]">{c.nombre}</p>}
                 </td>
                 <td className="px-4 py-3 text-[#4A5568] hidden sm:table-cell">{c.tel ?? "—"}</td>
                 <td className="px-4 py-3 text-right font-medium text-[#0F1A2E]">{c._count.viajes}</td>
