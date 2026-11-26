@@ -9,7 +9,7 @@ import { useAdminKeyboardContext } from "@/lib/hooks/useAdminKeyboard";
 const NAV = [
   { href: "/admin", label: "Panel de control", icon: "📊", key: "H" },
   { href: "/admin/viajes", label: "Viajes", icon: "🚛", key: "V" },
-  { href: "/admin/vehiculos", label: "Vehículos", icon: "🚐", key: null },
+  { href: "/admin/vehiculos", label: "Vehículos", icon: "🚐", key: "Q" },
   { href: "/admin/gastos", label: "Gastos", icon: "💸", key: "G" },
   { href: "/admin/facturas", label: "Facturas", icon: "🧾", key: "F" },
   { href: "/admin/clientes", label: "Clientes", icon: "👤", key: "C" },
@@ -72,7 +72,7 @@ export default function AdminSidebar({
                 <kbd className={`hidden md:inline-flex items-center justify-center w-5 h-5 rounded text-[10px] font-mono font-bold border transition-opacity ${
                   active
                     ? "bg-[#0F1A2E]/20 border-[#0F1A2E]/30 text-[#0F1A2E]/60"
-                    : "bg-white/5 border-white/10 text-white/30 group-hover:opacity-100 opacity-0"
+                    : "bg-white/5 border-white/10 text-white/30"
                 }`}>{key}</kbd>
               )}
             </Link>

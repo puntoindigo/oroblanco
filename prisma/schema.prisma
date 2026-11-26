@@ -74,6 +74,7 @@ model Vehiculo {
   tipo       String      @default("Camión")
   motor      String?
   chasis     String?
+  ciaSeguro  String?
   activo     Boolean     @default(true)
   createdAt  DateTime    @default(now())
   viajes     Viaje[]

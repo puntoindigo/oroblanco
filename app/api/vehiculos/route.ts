@@ -13,9 +13,9 @@ export async function POST(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
-  const { patente, marca, modelo, anio, tipo } = await req.json();
+  const { patente, marca, modelo, anio, tipo, motor, chasis, ciaSeguro } = await req.json();
   if (!patente || !marca || !modelo) {
-    return NextResponse.json({ error: "Faltan campos" }, { status: 400 });
+    return NextResponse.json({ error: "Faltan campos obligatorios" }, { status: 400 });
   }
 
   const v = await prisma.vehiculo.create({
@@ -25,7 +25,10 @@ export async function POST(req: NextRequest) {
       modelo,
       anio: anio ? parseInt(anio) : null,
       tipo: tipo || "Camión",
+      motor: motor || null,
+      chasis: chasis || null,
+      ciaSeguro: ciaSeguro || null,
     },
   });
-  return NextResponse.json(v);
+  return NextResponse.json(v, { status: 201 });
 }
