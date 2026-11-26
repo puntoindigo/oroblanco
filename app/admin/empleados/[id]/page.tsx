@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import ConfigEmpleadoForm from "@/components/admin/config-empleado-form";
+import type { CctRates } from "@/lib/calcular-recibo";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +20,10 @@ export default async function EmpleadoPage({ params }: { params: Promise<{ id: s
     },
   });
   if (!emp) notFound();
+
+  const antigüedad = emp.fechaIngreso
+    ? Math.floor((Date.now() - new Date(emp.fechaIngreso).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
+    : null;
 
   return (
     <div className="p-6 sm:p-8 max-w-4xl">
@@ -56,16 +62,32 @@ export default async function EmpleadoPage({ params }: { params: Promise<{ id: s
             <p className="font-medium text-[#0F1A2E]">{emp.categoria ?? "—"}</p>
           </div>
           <div>
-            <p className="text-xs text-[#4A5568] uppercase tracking-wider">Ingreso</p>
+            <p className="text-xs text-[#4A5568] uppercase tracking-wider">Ingreso · Antigüedad</p>
             <p className="font-medium text-[#0F1A2E]">
               {emp.fechaIngreso ? new Date(emp.fechaIngreso).toLocaleDateString("es-AR") : "—"}
+              {antigüedad !== null && <span className="text-[#4A5568] ml-1">({antigüedad} {antigüedad === 1 ? "año" : "años"})</span>}
             </p>
           </div>
         </div>
       </div>
 
+      {/* Config CCT */}
+      <div id="config">
+        <ConfigEmpleadoForm
+          empleadoId={id}
+          initial={{
+            remuneracionAsignada: emp.remuneracionAsignada ?? null,
+            seccion: emp.seccion ?? "",
+            modalidad: emp.modalidad ?? "",
+            obraSocialNombre: emp.obraSocialNombre ?? "",
+            lugaryFecha: emp.lugaryFecha ?? "",
+            cctRates: (emp.cctRates as CctRates | null),
+          }}
+        />
+      </div>
+
       {/* Recibos */}
-      <div className="flex justify-between items-center mb-3">
+      <div className="flex justify-between items-center mb-3 mt-6">
         <h2 className="text-lg font-bold text-[#0F1A2E]">Recibos de Sueldo</h2>
         <Link
           href={`/admin/empleados/${id}/recibos/nuevo`}
@@ -88,7 +110,7 @@ export default async function EmpleadoPage({ params }: { params: Promise<{ id: s
               <tr>
                 <th className="text-left px-4 py-3 text-[#4A5568] font-medium text-xs uppercase tracking-wider">Período</th>
                 <th className="text-right px-4 py-3 text-[#4A5568] font-medium text-xs uppercase tracking-wider">Sueldo Neto</th>
-                <th className="text-right px-4 py-3 text-[#4A5568] font-medium text-xs uppercase tracking-wider">Bruto</th>
+                <th className="text-right px-4 py-3 text-[#4A5568] font-medium text-xs uppercase tracking-wider hidden sm:table-cell">Bruto</th>
                 <th className="px-4 py-3" />
               </tr>
             </thead>
@@ -105,7 +127,7 @@ export default async function EmpleadoPage({ params }: { params: Promise<{ id: s
                         ? `$${(d.sueldoNeto as number).toLocaleString("es-AR", { maximumFractionDigits: 0 })}`
                         : "—"}
                     </td>
-                    <td className="px-4 py-3 text-right text-[#4A5568]">
+                    <td className="px-4 py-3 text-right text-[#4A5568] hidden sm:table-cell">
                       {typeof d.sueldoBruto === "number"
                         ? `$${(d.sueldoBruto as number).toLocaleString("es-AR", { maximumFractionDigits: 0 })}`
                         : "—"}
@@ -113,7 +135,7 @@ export default async function EmpleadoPage({ params }: { params: Promise<{ id: s
                     <td className="px-4 py-3 text-right">
                       <a
                         href={`/api/empleados/${id}/recibos/${r.id}/pdf`}
-                        className="inline-flex items-center gap-1.5 bg-[#0F1A2E] text-white text-xs font-medium px-3 py-1.5 rounded hover:bg-[#1E3A5F] transition-colors"
+                        className="inline-flex items-center gap-1 bg-[#0F1A2E] text-white text-xs font-medium px-3 py-1.5 rounded hover:bg-[#1E3A5F] transition-colors"
                       >
                         ↓ PDF
                       </a>

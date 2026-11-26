@@ -50,20 +50,26 @@ model AdminUser {
 }
 
 model Empleado {
-  id           String          @id @default(cuid())
-  legajo       String?         @unique
-  nombre       String
-  apellido     String?
-  cuit         String?
-  cct          String?
-  categoria    String?
-  activo       Boolean         @default(true)
-  fechaIngreso DateTime?
-  createdAt    DateTime        @default(now())
-  updatedAt    DateTime        @updatedAt
-  viajes       Viaje[]
-  documentos   Documento[]
-  recibos      ReciboSueldo[]
+  id                   String          @id @default(cuid())
+  legajo               String?         @unique
+  nombre               String
+  apellido             String?
+  cuit                 String?
+  cct                  String?
+  categoria            String?
+  activo               Boolean         @default(true)
+  fechaIngreso         DateTime?
+  seccion              String?
+  modalidad            String?
+  obraSocialNombre     String?
+  lugaryFecha          String?
+  remuneracionAsignada Float?
+  cctRates             Json?
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+  viajes               Viaje[]
+  documentos           Documento[]
+  recibos              ReciboSueldo[]
 }
 
 model ReciboSueldo {

@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { calcularRecibo, TASAS_DEFAULT } from "@/lib/calcular-recibo";
+import type { CctRates, ReciboCalculado } from "@/lib/calcular-recibo";
 
 const MESES = [
   { v: 1, l: "Enero" }, { v: 2, l: "Febrero" }, { v: 3, l: "Marzo" },
@@ -10,127 +12,121 @@ const MESES = [
   { v: 10, l: "Octubre" }, { v: 11, l: "Noviembre" }, { v: 12, l: "Diciembre" },
 ];
 
-const AÑOS = [2024, 2025, 2026, 2027];
+const $ = (n: number) =>
+  `$${n.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-function Seccion({ titulo, children }: { titulo: string; children: React.ReactNode }) {
+function FilaCalc({ label, val, indent }: { label: string; val: number; indent?: boolean }) {
   return (
-    <div className="mb-6">
-      <div className="bg-[#0F1A2E] text-white text-xs font-bold uppercase tracking-wider px-4 py-2 rounded-t">
-        {titulo}
-      </div>
-      <div className="border border-gray-200 border-t-0 rounded-b p-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {children}
-      </div>
+    <div className={`flex justify-between py-1 border-b border-gray-100 text-sm ${indent ? "pl-4" : ""}`}>
+      <span className="text-[#4A5568]">{label}</span>
+      <span className="font-medium text-[#0F1A2E]">{$(val)}</span>
     </div>
   );
 }
 
-function Campo({
-  label, name, type = "number", placeholder, span, required,
-}: {
-  label: string; name: string; type?: string; placeholder?: string; span?: number; required?: boolean;
-}) {
-  return (
-    <div className={span === 2 ? "col-span-2" : span === 4 ? "col-span-4 sm:col-span-4" : ""}>
-      <label className="block text-[#4A5568] text-xs font-medium uppercase tracking-wider mb-1">
-        {label}{required && " *"}
-      </label>
-      <input
-        name={name}
-        type={type}
-        step={type === "number" ? "0.01" : undefined}
-        placeholder={placeholder}
-        required={required}
-        className="w-full border border-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-[#C9A84C]"
-      />
-    </div>
-  );
-}
+type EmpleadoBasic = {
+  id: string;
+  remuneracionAsignada: number | null;
+  cctRates: CctRates | null;
+  seccion: string | null;
+  modalidad: string | null;
+  obraSocialNombre: string | null;
+  lugaryFecha: string | null;
+};
 
-export default function ReciboForm({ empleadoId }: { empleadoId: string }) {
+export default function ReciboForm({ empleado }: { empleado: EmpleadoBasic }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  const rates: CctRates = empleado.cctRates ?? TASAS_DEFAULT;
+
+  const hoy = new Date();
+  const [anio, setAnio] = useState(hoy.getFullYear());
+  const [mes, setMes] = useState(hoy.getMonth() + 1);
+  const [km, setKm] = useState<string>("");
+  const [dias, setDias] = useState<string>(String(rates.diasHabilesMes));
+
+  const calc = useMemo<ReciboCalculado | null>(() => {
+    const kmN = Number(km);
+    const diasN = Number(dias);
+    if (!kmN || !diasN) return null;
+    return calcularRecibo(kmN, diasN, rates);
+  }, [km, dias, rates]);
+
+  // Período en texto: mes del trabajo = mes anterior al de pago
+  const mesTextoLabel = MESES.find((m) => m.v === mes)?.l ?? "";
+  const periodoDisplay = `${mesTextoLabel} ${anio}`;
+  const mesPago = mes === 12 ? 1 : mes + 1;
+  const anioPago = mes === 12 ? anio + 1 : anio;
+  const periodoPago = `${MESES.find((m) => m.v === mesPago)?.l} ${anioPago}`;
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!calc) return;
     setLoading(true);
     setError("");
 
-    const form = e.currentTarget;
-    const fd = new FormData(form);
-    const g = (k: string) => Number(fd.get(k) || 0);
-    const s = (k: string) => String(fd.get(k) || "");
-
-    const periodoAnio = Number(fd.get("periodoAnio"));
-    const periodoMes = Number(fd.get("periodoMes"));
-
     const data = {
-      periodoDisplay: s("periodoDisplay"),
-      seccion: s("seccion"),
-      modalidad: s("modalidad"),
-      fechaReconocida: s("fechaReconocida"),
-      obraSocialNombre: s("obraSocialNombre"),
-      lugaryFecha: s("lugaryFecha"),
-      periodoPago: s("periodoPago"),
-      remuneracionAsignada: g("remuneracionAsignada"),
-      sueldoBruto: g("sueldoBruto"),
-      roiSa: g("roiSa"),
+      periodoDisplay,
+      seccion: empleado.seccion ?? "",
+      modalidad: empleado.modalidad ?? "",
+      obraSocialNombre: empleado.obraSocialNombre ?? "",
+      lugaryFecha: empleado.lugaryFecha ?? "",
+      periodoPago,
+      remuneracionAsignada: empleado.remuneracionAsignada ?? 0,
+      sueldoBruto: calc.sueldoBruto,
+      roiSa: calc.roiSa,
       ctb: {
-        jubilacion: g("ctb_jubilacion"),
-        ley19032: g("ctb_ley19032"),
-        asigFamiliares: g("ctb_asigFamiliares"),
-        fondoEmpleo: g("ctb_fondoEmpleo"),
-        obraSocial: g("ctb_obraSocial"),
-        artPorcentual: g("ctb_artPorcentual"),
-        artSumaFija: g("ctb_artSumaFija"),
-        seguroVida: g("ctb_seguroVida"),
-        costoCCT: g("ctb_costoCCT"),
+        jubilacion: calc.ctbJubilacion,
+        ley19032: calc.ctbLey19032,
+        asigFamiliares: calc.ctbAsigFamiliares,
+        fondoEmpleo: calc.ctbFondoEmpleo,
+        obraSocial: calc.ctbObraSocial,
+        artPorcentual: calc.ctbArtPorcentual,
+        artSumaFija: calc.ctbArtSumaFija,
+        costoCCT: calc.ctbCostoCCT,
+        seguroVida: calc.ctbSeguroVida,
       },
       rem: {
-        diasSueldo: g("rem_diasSueldo"),
-        montoSueldo: g("rem_montoSueldo"),
-        montoPresentismo: g("rem_montoPresentismo"),
-        baseKmRecorrido: g("rem_baseKmRecorrido"),
-        montoKmRecorrido: g("rem_montoKmRecorrido"),
+        diasSueldo: calc.diasSueldo,
+        montoSueldo: calc.montoSueldo,
+        montoPresentismo: calc.montoPresentismo,
+        baseKmRecorrido: calc.baseKmRecorrido,
+        montoKmRecorrido: calc.montoKmRecorrido,
       },
       noRem: {
-        baseViaticosKm: g("noRem_baseViaticosKm"),
-        montoViaticosKm: g("noRem_montoViaticosKm"),
-        baseViaticoEspecial: g("noRem_baseViaticoEspecial"),
-        montoViaticoEspecial: g("noRem_montoViaticoEspecial"),
-        montoComida: g("noRem_montoComida"),
-        montoRedondeo: g("noRem_montoRedondeo"),
+        baseViaticosKm: calc.baseDietas,
+        montoViaticosKm: calc.montoViaticosKm,
+        baseViaticoEspecial: calc.basePernoctadas,
+        montoViaticoEspecial: calc.montoViaticoEspecial,
+        montoComida: calc.montoComida,
+        montoRedondeo: calc.montoAdicionalNoRem,
       },
       desc: {
-        jubilacion: g("desc_jubilacion"),
-        ley19032: g("desc_ley19032"),
-        obraSocial: g("desc_obraSocial"),
-        cuotaSindical: g("desc_cuotaSindical"),
-        seguroSepelio: g("desc_seguroSepelio"),
+        jubilacion: calc.descJubilacion,
+        ley19032: calc.descLey19032,
+        obraSocial: calc.descObraSocial,
+        cuotaSindical: calc.descCuotaSindical,
+        seguroSepelio: calc.descSeguroSepelio,
       },
-      totalRem:
-        g("rem_montoSueldo") + g("rem_montoPresentismo") + g("rem_montoKmRecorrido"),
-      totalNoRem:
-        g("noRem_montoViaticosKm") + g("noRem_montoViaticoEspecial") +
-        g("noRem_montoComida") + g("noRem_montoRedondeo"),
-      totalDesc:
-        g("desc_jubilacion") + g("desc_ley19032") + g("desc_obraSocial") +
-        g("desc_cuotaSindical") + g("desc_seguroSepelio"),
-      sueldoNeto: g("sueldoNeto"),
+      totalRem: calc.totalRem,
+      totalNoRem: calc.totalNoRem,
+      totalDesc: calc.totalDesc,
+      sueldoNeto: calc.sueldoNeto,
     };
 
     try {
-      const res = await fetch(`/api/empleados/${empleadoId}/recibos`, {
+      const res = await fetch(`/api/empleados/${empleado.id}/recibos`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ periodoAnio, periodoMes, data }),
+        body: JSON.stringify({ periodoAnio: anio, periodoMes: mes, data }),
       });
       if (!res.ok) {
         const j = await res.json().catch(() => ({}));
         throw new Error((j as { error?: string }).error ?? "Error al guardar");
       }
-      router.push(`/admin/empleados/${empleadoId}`);
+      router.push(`/admin/empleados/${empleado.id}`);
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al guardar");
@@ -139,87 +135,123 @@ export default function ReciboForm({ empleadoId }: { empleadoId: string }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-4xl">
+    <form onSubmit={handleSubmit} className="max-w-2xl space-y-6">
 
       {/* ── Período ── */}
-      <Seccion titulo="Período">
-        <div>
-          <label className="block text-[#4A5568] text-xs font-medium uppercase tracking-wider mb-1">Año *</label>
-          <select name="periodoAnio" required className="w-full border border-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-[#C9A84C]">
-            {AÑOS.map((a) => <option key={a} value={a}>{a}</option>)}
-          </select>
+      <div className="bg-white rounded-xl border border-gray-100 p-5">
+        <h2 className="font-semibold text-[#0F1A2E] mb-4">Período liquidado</h2>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs text-[#4A5568] uppercase tracking-wider mb-1">Año</label>
+            <select
+              value={anio}
+              onChange={(e) => setAnio(Number(e.target.value))}
+              className="w-full border border-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-[#C9A84C]"
+            >
+              {[2024, 2025, 2026, 2027].map((a) => <option key={a}>{a}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs text-[#4A5568] uppercase tracking-wider mb-1">Mes</label>
+            <select
+              value={mes}
+              onChange={(e) => setMes(Number(e.target.value))}
+              className="w-full border border-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-[#C9A84C]"
+            >
+              {MESES.map((m) => <option key={m.v} value={m.v}>{m.l}</option>)}
+            </select>
+          </div>
         </div>
-        <div>
-          <label className="block text-[#4A5568] text-xs font-medium uppercase tracking-wider mb-1">Mes *</label>
-          <select name="periodoMes" required className="w-full border border-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-[#C9A84C]">
-            {MESES.map((m) => <option key={m.v} value={m.v}>{m.l}</option>)}
-          </select>
+        <p className="text-xs text-[#4A5568] mt-2">
+          Período: <strong>{periodoDisplay}</strong> · Pago: <strong>{periodoPago}</strong>
+        </p>
+      </div>
+
+      {/* ── Datos de viaje ── */}
+      <div className="bg-white rounded-xl border border-gray-100 p-5">
+        <h2 className="font-semibold text-[#0F1A2E] mb-4">Datos del período</h2>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs text-[#4A5568] uppercase tracking-wider mb-1">KM recorridos *</label>
+            <input
+              type="number"
+              value={km}
+              onChange={(e) => setKm(e.target.value)}
+              placeholder="510"
+              required
+              className="w-full border border-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-[#C9A84C]"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-[#4A5568] uppercase tracking-wider mb-1">Días trabajados</label>
+            <input
+              type="number"
+              value={dias}
+              onChange={(e) => setDias(e.target.value)}
+              placeholder="25"
+              className="w-full border border-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-[#C9A84C]"
+            />
+            <p className="text-xs text-[#4A5568] mt-1">Default: {rates.diasHabilesMes} días hábiles</p>
+          </div>
         </div>
-        <Campo label="Período (texto en recibo)" name="periodoDisplay" type="text" placeholder="Agosto 2026" span={2} required />
-        <Campo label="Lugar y Fecha de Pago" name="lugaryFecha" type="text" placeholder="Rosario" span={2} />
-        <Campo label="Período de Pago" name="periodoPago" type="text" placeholder="Septiembre 2026" span={2} />
-        <Campo label="Sección" name="seccion" type="text" placeholder="Administración" span={2} />
-        <Campo label="Modalidad" name="modalidad" type="text" placeholder="A tiempo completo Indeterminado (Trabajo permanente)" span={4} />
-        <Campo label="Fecha Reconocida" name="fechaReconocida" type="text" placeholder="08/09/2026" span={2} />
-        <Campo label="Obra Social" name="obraSocialNombre" type="text" placeholder="OSECAC" span={2} />
-      </Seccion>
+      </div>
 
-      {/* ── Remuneración ── */}
-      <Seccion titulo="Remuneración">
-        <Campo label="Remuneración Asignada" name="remuneracionAsignada" required />
-        <Campo label="Sueldo Bruto" name="sueldoBruto" required />
-        <Campo label="Sueldo Neto" name="sueldoNeto" required />
-        <Campo label="ROI SA" name="roiSa" />
-      </Seccion>
+      {/* ── Preview calculado ── */}
+      {calc && (
+        <div className="bg-white rounded-xl border border-gray-100 p-5 space-y-4">
+          <h2 className="font-semibold text-[#0F1A2E]">Liquidación calculada</h2>
 
-      {/* ── Contribuciones empleador ── */}
-      <Seccion titulo="Contribuciones Empleador">
-        <Campo label="5010 · Jubilación" name="ctb_jubilacion" />
-        <Campo label="5020 · Ley 19032" name="ctb_ley19032" />
-        <Campo label="5030 · Asig. Familiares" name="ctb_asigFamiliares" />
-        <Campo label="5040 · Fondo de Empleo" name="ctb_fondoEmpleo" />
-        <Campo label="5050 · Obra Social" name="ctb_obraSocial" />
-        <Campo label="5060 · ART Porcentual" name="ctb_artPorcentual" />
-        <Campo label="5250 · ART Suma Fija" name="ctb_artSumaFija" />
-        <Campo label="5361 · Seguro de Vida" name="ctb_seguroVida" />
-        <Campo label="Costo Derivado CCT" name="ctb_costoCCT" />
-      </Seccion>
+          <div>
+            <p className="text-xs font-bold text-[#4A5568] uppercase tracking-wider mb-1">Remunerativos</p>
+            <FilaCalc label={`0301 Sueldo (${calc.diasSueldo} días)`} val={calc.montoSueldo} />
+            <FilaCalc label="0305 Presentismo" val={calc.montoPresentismo} />
+            <FilaCalc label={`0323 KM Recorrido (${calc.baseKmRecorrido} km)`} val={calc.montoKmRecorrido} />
+            <FilaCalc label="Total remunerativo" val={calc.totalRem} />
+          </div>
 
-      {/* ── Conceptos Remunerativos ── */}
-      <Seccion titulo="Conceptos Remunerativos">
-        <Campo label="0301 · Días Sueldo" name="rem_diasSueldo" />
-        <Campo label="0301 · Monto Sueldo" name="rem_montoSueldo" required />
-        <Campo label="0305 · Presentismo" name="rem_montoPresentismo" />
-        <Campo label="0323 · Base KM Recorrido" name="rem_baseKmRecorrido" />
-        <Campo label="0323 · Monto KM Recorrido" name="rem_montoKmRecorrido" />
-      </Seccion>
+          <div>
+            <p className="text-xs font-bold text-[#4A5568] uppercase tracking-wider mb-1">No remunerativos</p>
+            <FilaCalc label={`0395 Viáticos por KM (${calc.baseDietas} días fuera)`} val={calc.montoViaticosKm} />
+            <FilaCalc label={`0401 Viático especial (${calc.basePernoctadas} noches)`} val={calc.montoViaticoEspecial} />
+            <FilaCalc label="0402 Comida" val={calc.montoComida} />
+            <FilaCalc label="9999 Adicional no rem" val={calc.montoAdicionalNoRem} />
+            <FilaCalc label="Total no remunerativo" val={calc.totalNoRem} />
+          </div>
 
-      {/* ── Conceptos No Remunerativos ── */}
-      <Seccion titulo="Conceptos No Remunerativos">
-        <Campo label="0395 · Base Viáticos KM" name="noRem_baseViaticosKm" />
-        <Campo label="0395 · Monto Viáticos KM" name="noRem_montoViaticosKm" />
-        <Campo label="0401 · Base Viático Especial" name="noRem_baseViaticoEspecial" />
-        <Campo label="0401 · Monto Viático Especial" name="noRem_montoViaticoEspecial" />
-        <Campo label="0402 · Comida" name="noRem_montoComida" />
-        <Campo label="9999 · Redondeo" name="noRem_montoRedondeo" />
-      </Seccion>
+          <div>
+            <p className="text-xs font-bold text-[#4A5568] uppercase tracking-wider mb-1">Descuentos trabajador</p>
+            <FilaCalc label="4010 Jubilación (11%)" val={calc.descJubilacion} indent />
+            <FilaCalc label="4020 Ley 19032 (3%)" val={calc.descLey19032} indent />
+            <FilaCalc label="4051 Obra Social (3%)" val={calc.descObraSocial} indent />
+            <FilaCalc label="4210 Cuota Sindical (1.5%)" val={calc.descCuotaSindical} indent />
+            <FilaCalc label="4211 Seguro y Sepelio (3%)" val={calc.descSeguroSepelio} indent />
+            <FilaCalc label="Total descuentos" val={calc.totalDesc} />
+          </div>
 
-      {/* ── Descuentos ── */}
-      <Seccion titulo="Descuentos">
-        <Campo label="4010 · Jubilación" name="desc_jubilacion" />
-        <Campo label="4020 · Ley 19032" name="desc_ley19032" />
-        <Campo label="4051 · Obra Social" name="desc_obraSocial" />
-        <Campo label="4210 · Cuota Sindical" name="desc_cuotaSindical" />
-        <Campo label="4211 · Seguro y Sepelio" name="desc_seguroSepelio" />
-      </Seccion>
+          <div className="border-t border-gray-200 pt-3 space-y-1">
+            <div className="flex justify-between text-sm">
+              <span className="text-[#4A5568]">Sueldo Bruto</span>
+              <span className="font-medium">{$(calc.sueldoBruto)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="font-bold text-[#0F1A2E]">SUELDO NETO</span>
+              <span className="font-bold text-lg text-[#0F1A2E]">{$(calc.sueldoNeto)}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-[#4A5568]">ROI SA (costo total empleador)</span>
+              <span className="font-medium text-[#C9A84C]">{$(calc.roiSa)}</span>
+            </div>
+          </div>
+        </div>
+      )}
 
-      {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+      {error && <p className="text-red-500 text-sm">{error}</p>}
 
       <div className="flex gap-3">
         <button
           type="submit"
-          disabled={loading}
-          className="bg-[#C9A84C] text-[#0F1A2E] font-bold px-6 py-2.5 rounded text-sm hover:bg-[#E8C96A] transition-colors disabled:opacity-60"
+          disabled={loading || !calc}
+          className="bg-[#C9A84C] text-[#0F1A2E] font-bold px-6 py-2.5 rounded text-sm hover:bg-[#E8C96A] transition-colors disabled:opacity-50"
         >
           {loading ? "Guardando..." : "Guardar recibo"}
         </button>

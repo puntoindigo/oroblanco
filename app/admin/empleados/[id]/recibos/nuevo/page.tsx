@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import ReciboForm from "@/components/admin/recibo-form";
+import type { CctRates } from "@/lib/calcular-recibo";
 
 export const dynamic = "force-dynamic";
 
@@ -11,6 +12,16 @@ export default async function NuevoReciboPage({ params }: { params: Promise<{ id
   if (!emp) notFound();
 
   const nombre = emp.apellido ? `${emp.apellido}, ${emp.nombre}` : emp.nombre;
+
+  const empleadoBasic = {
+    id: emp.id,
+    remuneracionAsignada: emp.remuneracionAsignada,
+    cctRates: emp.cctRates as CctRates | null,
+    seccion: emp.seccion,
+    modalidad: emp.modalidad,
+    obraSocialNombre: emp.obraSocialNombre,
+    lugaryFecha: emp.lugaryFecha,
+  };
 
   return (
     <div className="p-6 sm:p-8">
@@ -23,9 +34,17 @@ export default async function NuevoReciboPage({ params }: { params: Promise<{ id
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-[#0F1A2E]">Nuevo Recibo de Sueldo</h1>
         <p className="text-[#4A5568] text-sm mt-1">{nombre}</p>
+        {!emp.remuneracionAsignada && (
+          <div className="mt-3 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 text-sm text-amber-800">
+            ⚠️ Este empleado no tiene configurada la remuneración asignada ni las tasas CCT.{" "}
+            <Link href={`/admin/empleados/${id}#config`} className="underline font-medium">
+              Configurar antes de continuar
+            </Link>
+          </div>
+        )}
       </div>
 
-      <ReciboForm empleadoId={id} />
+      <ReciboForm empleado={empleadoBasic} />
     </div>
   );
 }
