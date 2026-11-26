@@ -76,7 +76,7 @@ export default function EmpleadosTable({ empleados }: { empleados: Empleado[] })
                 </td>
                 <td className="px-4 py-3 hidden md:table-cell text-[#4A5568]">
                   {emp.fechaIngreso
-                    ? new Date(emp.fechaIngreso).toLocaleDateString("es-AR")
+                    ? new Date(emp.fechaIngreso).toLocaleDateString("es-AR", { timeZone: "UTC" })
                     : "—"}
                 </td>
                 <td className="px-4 py-3">

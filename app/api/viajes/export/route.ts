@@ -16,7 +16,7 @@ export async function GET() {
   const rows = viajes
     .map((v) =>
       [
-        v.fecha ? new Date(v.fecha).toLocaleDateString("es-AR") : "",
+        v.fecha ? new Date(v.fecha).toLocaleDateString("es-AR", { timeZone: "UTC" }) : "",
         v.cliente,
         v.empresa ?? "",
         v.clienteTel ?? "",

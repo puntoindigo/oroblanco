@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
   const rows = facturas
     .map((f) =>
       [
-        new Date(f.fecha).toLocaleDateString("es-AR"),
+        new Date(f.fecha).toLocaleDateString("es-AR", { timeZone: "UTC" }),
         f.tipo,
         f.puntoVenta,
         f.numero,

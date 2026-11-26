@@ -81,7 +81,7 @@ export default function DocumentosTable({ documentos }: { documentos: Documento[
                   : "—"}
               </td>
               <td className="px-4 py-3 hidden md:table-cell text-[#4A5568]">
-                {doc.fecha ? new Date(doc.fecha).toLocaleDateString("es-AR") : "—"}
+                {doc.fecha ? new Date(doc.fecha).toLocaleDateString("es-AR", { timeZone: "UTC" }) : "—"}
               </td>
               <td className="px-4 py-3 hidden md:table-cell text-[#4A5568]">
                 {doc.monto != null ? `$${doc.monto.toLocaleString("es-AR")}` : "—"}

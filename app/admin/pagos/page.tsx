@@ -201,7 +201,7 @@ export default function PagosPage() {
                       </td>
                       <td className="px-4 py-3 text-[#4A5568]">
                         {pago.fechaAcreditacion
-                          ? new Date(pago.fechaAcreditacion).toLocaleDateString("es-AR")
+                          ? new Date(pago.fechaAcreditacion).toLocaleDateString("es-AR", { timeZone: "UTC" })
                           : "—"}
                       </td>
                       <td className="px-4 py-3 text-xs text-[#4A5568]">
