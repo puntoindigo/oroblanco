@@ -13,9 +13,7 @@ export default async function EditarEmpleadoPage({ params }: { params: Promise<{
   const initial = {
     nombre: emp.nombre,
     apellido: emp.apellido ?? "",
-    legajo: emp.legajo ?? "",
     cuit: emp.cuit ?? "",
-    cct: emp.cct ?? "",
     categoria: emp.categoria ?? "",
     fechaIngreso: emp.fechaIngreso
       ? emp.fechaIngreso.toISOString().split("T")[0]
@@ -32,7 +30,7 @@ export default async function EditarEmpleadoPage({ params }: { params: Promise<{
           ← Empleados
         </Link>
       </div>
-      <h1 className="text-2xl font-bold text-[#0F1A2E] mb-1">Editar empleado</h1>
+      <h1 className="text-2xl font-bold text-[#0F1A2E] mb-1">Editar datos de empleado</h1>
       <p className="text-[#4A5568] text-sm mb-6">{nombre}</p>
       <EmpleadoForm empleadoId={id} initial={initial} />
     </div>

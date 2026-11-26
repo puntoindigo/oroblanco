@@ -3,12 +3,17 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
+const CATEGORIAS = [
+  "Conductor 1ra Categoría",
+  "Conductor 2da Categoría",
+  "Conductor 3ra Categoría",
+  "Ayudante",
+];
+
 type EmpleadoValues = {
   nombre: string;
   apellido: string;
-  legajo: string;
   cuit: string;
-  cct: string;
   categoria: string;
   fechaIngreso: string;
   activo: boolean;
@@ -22,18 +27,41 @@ type Props = {
 const EMPTY: EmpleadoValues = {
   nombre: "",
   apellido: "",
-  legajo: "",
   cuit: "",
-  cct: "",
   categoria: "",
   fechaIngreso: "",
   activo: true,
 };
 
+/** Acepta DD/MM/YYYY o YYYY-MM-DD y devuelve YYYY-MM-DD para la API, o null si vacío */
+function parseFecha(raw: string): string | null {
+  const s = raw.trim();
+  if (!s) return null;
+  // DD/MM/YYYY → YYYY-MM-DD
+  const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (m) return `${m[3]}-${m[2].padStart(2, "0")}-${m[1].padStart(2, "0")}`;
+  // Ya es ISO o similar
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
+  return null;
+}
+
+/** Convierte YYYY-MM-DD a DD/MM/YYYY para mostrar */
+function isoToDisplay(iso: string): string {
+  if (!iso) return "";
+  const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (m) return `${m[3]}/${m[2]}/${m[1]}`;
+  return iso;
+}
+
 export default function EmpleadoForm({ empleadoId, initial }: Props) {
   const router = useRouter();
   const isEdit = !!empleadoId;
-  const [v, setV] = useState<EmpleadoValues>({ ...EMPTY, ...initial });
+
+  const [v, setV] = useState<EmpleadoValues>({
+    ...EMPTY,
+    ...initial,
+    fechaIngreso: initial?.fechaIngreso ? isoToDisplay(initial.fechaIngreso) : "",
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -46,14 +74,19 @@ export default function EmpleadoForm({ empleadoId, initial }: Props) {
     setLoading(true);
     setError("");
 
+    const fechaIso = parseFecha(v.fechaIngreso);
+    if (v.fechaIngreso.trim() && !fechaIso) {
+      setError("Fecha inválida. Usá DD/MM/YYYY.");
+      setLoading(false);
+      return;
+    }
+
     const body = {
       nombre: v.nombre.trim(),
       apellido: v.apellido.trim() || null,
-      legajo: v.legajo.trim() || null,
       cuit: v.cuit.trim() || null,
-      cct: v.cct.trim() || null,
       categoria: v.categoria.trim() || null,
-      fechaIngreso: v.fechaIngreso || null,
+      fechaIngreso: fechaIso,
       activo: v.activo,
     };
 
@@ -78,40 +111,75 @@ export default function EmpleadoForm({ empleadoId, initial }: Props) {
     }
   }
 
-  const Field = ({
-    label, field, type = "text", placeholder,
-  }: { label: string; field: keyof EmpleadoValues; type?: string; placeholder?: string }) => (
-    <div>
-      <label className="block text-xs text-[#4A5568] uppercase tracking-wider mb-1">{label}</label>
-      <input
-        type={type}
-        value={v[field] as string}
-        onChange={(e) => set(field, e.target.value)}
-        placeholder={placeholder}
-        className="w-full border border-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-[#C9A84C]"
-      />
-    </div>
-  );
-
   return (
     <form onSubmit={handleSubmit} className="max-w-2xl space-y-5">
+      {/* Datos personales */}
       <div className="bg-white rounded-xl border border-gray-100 p-5">
         <h2 className="font-semibold text-[#0F1A2E] mb-4">Datos personales</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Field label="Nombre *" field="nombre" placeholder="José" />
-          <Field label="Apellido" field="apellido" placeholder="Torres" />
-          <Field label="CUIT" field="cuit" placeholder="20-12345678-9" />
-          <Field label="Legajo" field="legajo" placeholder="001" />
+          <div>
+            <label className="block text-xs text-[#4A5568] uppercase tracking-wider mb-1">Nombre *</label>
+            <input
+              type="text"
+              value={v.nombre}
+              onChange={(e) => set("nombre", e.target.value)}
+              placeholder="José"
+              required
+              className="w-full border border-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-[#C9A84C]"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-[#4A5568] uppercase tracking-wider mb-1">Apellido</label>
+            <input
+              type="text"
+              value={v.apellido}
+              onChange={(e) => set("apellido", e.target.value)}
+              placeholder="Torres"
+              className="w-full border border-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-[#C9A84C]"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-[#4A5568] uppercase tracking-wider mb-1">CUIL</label>
+            <input
+              type="text"
+              value={v.cuit}
+              onChange={(e) => set("cuit", e.target.value)}
+              placeholder="20-12345678-9"
+              className="w-full border border-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-[#C9A84C]"
+            />
+          </div>
         </div>
       </div>
 
+      {/* Datos laborales */}
       <div className="bg-white rounded-xl border border-gray-100 p-5">
         <h2 className="font-semibold text-[#0F1A2E] mb-4">Datos laborales</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Field label="CCT" field="cct" placeholder="40/88" />
-          <Field label="Categoría" field="categoria" placeholder="Conductor 1ra Cat." />
-          <Field label="Fecha de ingreso" field="fechaIngreso" type="date" />
-          <div className="flex items-center gap-3 pt-5">
+          <div>
+            <label className="block text-xs text-[#4A5568] uppercase tracking-wider mb-1">Fecha de ingreso</label>
+            <input
+              type="text"
+              value={v.fechaIngreso}
+              onChange={(e) => set("fechaIngreso", e.target.value)}
+              placeholder="DD/MM/YYYY"
+              className="w-full border border-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-[#C9A84C]"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-[#4A5568] uppercase tracking-wider mb-1">Categoría</label>
+            <input
+              type="text"
+              list="categorias-list"
+              value={v.categoria}
+              onChange={(e) => set("categoria", e.target.value)}
+              placeholder="Seleccioná o escribí"
+              className="w-full border border-gray-200 rounded px-3 py-2 text-sm focus:outline-none focus:border-[#C9A84C]"
+            />
+            <datalist id="categorias-list">
+              {CATEGORIAS.map((c) => <option key={c} value={c} />)}
+            </datalist>
+          </div>
+          <div className="flex items-center gap-3 pt-1">
             <input
               id="activo"
               type="checkbox"
