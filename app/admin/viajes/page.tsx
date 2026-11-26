@@ -8,7 +8,7 @@ export default async function ViajesPage() {
   const viajes = await prisma.viaje.findMany({
     select: {
       id: true, estado: true, fecha: true, origen: true, destino: true,
-      tipoCarga: true, cliente: true, clienteTel: true, precio: true,
+      tipoCarga: true, cliente: true, empresa: true, clienteTel: true, precio: true,
       vehiculo: { select: { patente: true, marca: true, modelo: true } },
     },
     orderBy: { createdAt: "desc" },

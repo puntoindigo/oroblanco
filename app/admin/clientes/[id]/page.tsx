@@ -64,8 +64,8 @@ export default async function ClienteDetailPage({
     <div className="p-6 sm:p-8 space-y-8">
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[#0F1A2E]">{cliente.nombre}</h1>
-          {cliente.empresa && <p className="text-[#4A5568] text-sm">{cliente.empresa}</p>}
+          <h1 className="text-2xl font-bold text-[#0F1A2E]">{cliente.empresa?.trim() || cliente.nombre}</h1>
+          {cliente.empresa && <p className="text-[#4A5568] text-sm">{cliente.nombre}</p>}
         </div>
         <DeleteClienteButton id={id} viajeCount={cliente._count.viajes} />
       </div>

@@ -16,6 +16,7 @@ type Viaje = {
   destino: string;
   tipoCarga: string;
   cliente: string;
+  empresa: string | null;
   clienteTel: string | null;
   precio: number | null;
   vehiculo: Vehiculo;
@@ -188,7 +189,7 @@ export default function ViajesTable({ viajes }: { viajes: Viaje[] }) {
                       {v.fecha ? new Date(v.fecha).toLocaleDateString("es-AR", { timeZone: "UTC" }) : "—"}
                     </td>
                     <td className="px-4 py-3">
-                      <div className="font-medium text-[#0F1A2E]">{v.cliente}</div>
+                      <div className="font-medium text-[#0F1A2E]">{v.empresa?.trim() || v.cliente}</div>
                       {v.clienteTel && <div className="text-xs text-[#4A5568]">{v.clienteTel}</div>}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-xs">

@@ -31,11 +31,11 @@ export default function FacturasPage() {
   useEffect(() => {
     fetch("/api/viajes")
       .then((r) => r.json())
-      .then((data: Array<{ id: string; cliente: string; origen: string; destino: string; fecha: string | null }>) =>
+      .then((data: Array<{ id: string; cliente: string; empresa: string | null; origen: string; destino: string; fecha: string | null }>) =>
         setViajes(
           data.map((v) => ({
             id: v.id,
-            label: `${v.cliente} · ${v.origen} → ${v.destino}${v.fecha ? " · " + new Date(v.fecha).toLocaleDateString("es-AR", { timeZone: "UTC" }) : ""}`,
+            label: `${v.empresa?.trim() || v.cliente} · ${v.origen} → ${v.destino}${v.fecha ? " · " + new Date(v.fecha).toLocaleDateString("es-AR", { timeZone: "UTC" }) : ""}`,
           }))
         )
       )

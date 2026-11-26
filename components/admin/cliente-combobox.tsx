@@ -104,8 +104,8 @@ export default function ClienteCombobox({ value, clienteNombre, onChange }: Prop
               onClick={() => { onChange(c.id, c); setOpen(false); setQuery(""); }}
               className="w-full text-left px-3 py-2.5 hover:bg-gray-50 border-b border-gray-100 last:border-0"
             >
-              <div className="text-sm font-medium text-gray-900">{c.nombre}</div>
-              {c.empresa && <div className="text-xs text-gray-500">{c.empresa}</div>}
+              <div className="text-sm font-medium text-gray-900">{c.empresa?.trim() || c.nombre}</div>
+              {c.empresa && <div className="text-xs text-gray-500">{c.nombre}</div>}
             </button>
           ))}
 

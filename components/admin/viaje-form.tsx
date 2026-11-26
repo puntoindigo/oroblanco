@@ -87,7 +87,7 @@ export default function ViajeForm({
   const [linking, setLinking] = useState(false);
   const [clienteId, setClienteId] = useState<string | null>(viaje?.clienteId ?? null);
   const [clienteNombre, setClienteNombre] = useState<string | null>(
-    viaje?.clienteId ? (viaje.empresa ? `${viaje.cliente} (${viaje.empresa})` : viaje.cliente) : null
+    viaje?.clienteId ? (viaje.empresa?.trim() || viaje.cliente) : null
   );
 
   const isEdit = !!viaje;
@@ -198,7 +198,7 @@ export default function ViajeForm({
               clienteNombre={clienteNombre ?? undefined}
               onChange={(id, c) => {
                 setClienteId(id);
-                setClienteNombre(id && c ? (c.empresa ? `${c.nombre} (${c.empresa})` : c.nombre) : null);
+                setClienteNombre(id && c ? (c.empresa?.trim() || c.nombre) : null);
               }}
             />
           </div>
