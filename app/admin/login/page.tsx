@@ -16,7 +16,7 @@ export default async function LoginPage({
   const isUnauthorized = error === "unauthorized";
 
   const appUrl =
-    process.env.NEXT_PUBLIC_APP_URL ?? "https://oroblanco.puntoindigo.com";
+    process.env.NEXT_PUBLIC_APP_URL ?? "https://transporteoroblanco.com";
   const accountsUrl =
     process.env.ACCOUNTS_URL ?? "https://accounts.puntoindigo.com";
   const loginUrl = `${accountsUrl}/login?redirect=${encodeURIComponent(appUrl + "/admin")}`;

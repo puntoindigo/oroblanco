@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
     const subject = `Nuevo presupuesto de ${nombre}`;
     const html = `<p><b>${nombre}</b> (${empresa ?? "particular"}) solicitó un presupuesto.</p>
 <p>Ruta: ${origen} → ${destino}<br>Carga: ${tipoCarga}<br>Tel: ${telefono}<br>Email: ${email ?? "—"}</p>
-<p>Ver en el <a href="https://oroblanco.puntoindigo.com/admin/viajes">panel de control</a>.</p>`;
+<p>Ver en el <a href="https://transporteoroblanco.com/admin/viajes">panel de control</a>.</p>`;
 
     try {
       if (RESEND_API_KEY) {
