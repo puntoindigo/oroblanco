@@ -1,4 +1,5 @@
 import Link from "next/link";
+import OBIsotipo from "@/components/OBIsotipo";
 
 export default function Footer() {
   return (
@@ -8,9 +9,7 @@ export default function Footer() {
           {/* Brand */}
           <div className="sm:col-span-2 lg:col-span-1">
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded bg-[#C9A84C] flex items-center justify-center font-bold text-[#0F1A2E] text-sm">
-                OB
-              </div>
+              <OBIsotipo size={36} />
               <div>
                 <div className="text-white font-bold text-base tracking-wide">ORO BLANCO</div>
                 <div className="text-[#C9A84C] text-[10px] tracking-widest uppercase">
@@ -79,8 +78,13 @@ export default function Footer() {
             <ul className="space-y-2 text-sm">
               <li>📍 Rosario, Santa Fe</li>
               <li>
-                <a href="mailto:contacto@oroblancolog.com.ar" className="hover:text-[#C9A84C] transition-colors">
-                  contacto@oroblancolog.com.ar
+                <a href="https://transporteoroblanco.com" className="hover:text-[#C9A84C] transition-colors">
+                  transporteoroblanco.com
+                </a>
+              </li>
+              <li>
+                <a href="tel:+543413824798" className="hover:text-[#C9A84C] transition-colors">
+                  +54 341 382-4798
                 </a>
               </li>
               <li>🕐 Lun–Vie 8:00–18:00</li>

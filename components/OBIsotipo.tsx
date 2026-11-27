@@ -1,19 +1,18 @@
 "use client";
 
+import { useId } from "react";
+
 interface OBIsotipoProps {
   size?: number;
   className?: string;
 }
 
-let _id = 0;
-
 export default function OBIsotipo({ size = 32, className = "" }: OBIsotipoProps) {
-  // Unique ID per instance to avoid DOM clipPath conflicts when rendered multiple times
-  const uid = ++_id;
-  const c0 = `ob-cv0-${uid}`;
-  const c1 = `ob-cv1-${uid}`;
-  const c2 = `ob-cv2-${uid}`;
-  const cm = `ob-cvm-${uid}`;
+  const uid = useId().replace(/:/g, "-");
+  const c0 = `ob-cv0${uid}`;
+  const c1 = `ob-cv1${uid}`;
+  const c2 = `ob-cv2${uid}`;
+  const cm = `ob-cvm${uid}`;
 
   return (
     <svg

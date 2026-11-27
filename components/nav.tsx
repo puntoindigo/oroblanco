@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import OBIsotipo from "@/components/OBIsotipo";
 
 export default function Nav() {
   const [scrolled, setScrolled] = useState(false);
@@ -22,9 +23,7 @@ export default function Nav() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 flex items-center justify-between h-16 sm:h-18">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 group">
-          <div className="w-8 h-8 rounded bg-[#C9A84C] flex items-center justify-center font-bold text-[#0F1A2E] text-sm font-heading">
-            OB
-          </div>
+          <OBIsotipo size={36} />
           <div>
             <div className="text-white font-heading font-bold text-base leading-tight tracking-wide">
               ORO BLANCO
